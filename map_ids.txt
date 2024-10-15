@@ -1,0 +1,9 @@
+0x40 - New Bark Town - Home
+0x45 - Cherrygrove City - PC
+0x46 - Cherrygrove City - House1
+0x4A - Azalea Town - ?
+0x4B - Cianwood City - ?
+0x4C - Goldenrod City - 
+0x4D - Olivine City -
+0x50 - Ecruteak City - Morty Gym
+0x218 (3, 3) - Goldenrod City - Gamecorner 
