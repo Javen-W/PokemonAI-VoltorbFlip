@@ -1,0 +1,203 @@
+SystemID NDS
+002C579C	w	u	0	Main RAM	Battle Ally HP
+002C585C	w	u	0	Main RAM	Battle Enemy HP-1
+002CB38C	w	u	0	Main RAM	Battle Enemy HP-2
+0	S	_	1		
+002C0112	w	u	0	Main RAM	Party Menu Poke1 HP
+002C0110	w	u	0	Main RAM	Party Menu PokeID 1
+002C013C	w	u	0	Main RAM	Party Menu PokeID 2
+0	S	_	1		
+001BF6D8	w	s	0	Main RAM	Mouse Touch Coord
+0028435C	w	s	0	Main RAM	Step Counter
+00309D30	w	s	0	Main RAM	Player Pos
+002A6720	d	h	0	Main RAM	Card Player Score
+0	S	_	1		
+0	S	_	1		
+00000000023FFE0C	d	h	0	ARM9 System Bus	GameID
+0000000002101D2C	d	h	0	ARM9 System Bus	GamePointer
+00000000021BF6A8	d	h	0	ARM9 System Bus	GameFrame
+0	S	_	1		
+000000000227E1AC	b	h	0	ARM9 System Bus	SB #1 (GP+0xCFF4)
+000000000227E224	w	h	0	ARM9 System Bus	Trainer ID
+000000000227E226	w	h	0	ARM9 System Bus	Secret ID
+000000000227E228	d	h	0	ARM9 System Bus	Trainer Money
+000000000227E22C	b	h	0	ARM9 System Bus	Trainer Sex
+000000000227E22D	b	h	0	ARM9 System Bus	Trainer Origin
+000000000227E22E	b	h	0	ARM9 System Bus	Trainer Badges
+000000000227E22F	b	h	0	ARM9 System Bus	Trainer Avatar
+000000000227E248	d	h	0	ARM9 System Bus	Party Size
+000000000227F2CF	d	h	0	ARM9 System Bus	Fly Locations
+0	S	_	1		
+000000000227E24C	b	h	0	ARM9 System Bus	Party PokeBlock #1 (SB+0xA0)
+000000000227E24C	d	h	0	ARM9 System Bus	PID (+0x00)
+000000000227E252	w	h	0	ARM9 System Bus	Checksum (+0x06)
+000000000227E254	b	h	0	ARM9 System Bus	Shuffled Block #1 (+0x08)
+000000000227E274	w	h	0	ARM9 System Bus	Shuffled Block #2 (+0x28)
+000000000227E294	b	h	0	ARM9 System Bus	Shuffled Block #3 (+0x48)
+000000000227E2B4	b	h	0	ARM9 System Bus	Shuffled Block #4 (+0x68)
+000000000227E2D6	w	h	0	ARM9 System Bus	Battle Stats
+000000000227E338	b	h	0	ARM9 System Bus	Party PokeBlock #2 (+0xEC)
+000000000227E424	b	h	0	ARM9 System Bus	Party PokeBlock #3
+000000000227E510	b	h	0	ARM9 System Bus	Party PokeBlock #4
+000000000227E5FC	b	h	0	ARM9 System Bus	Party PokeBlock #5
+000000000227E6E8	b	h	0	ARM9 System Bus	Party PokeBlock #6
+0	S	_	1		
+000000000227E7DC	w	h	0	ARM9 System Bus	Inventory Item Block (SB+0x630)
+000000000227EA70	w	h	0	ARM9 System Bus	Inventory KeyItem Block
+000000000227EB38	w	h	0	ARM9 System Bus	Inventory TM Block
+000000000227ECC8	w	h	0	ARM9 System Bus	Inventory Mail Block
+000000000227ECF8	w	h	0	ARM9 System Bus	Inventory Med Block
+000000000227ED98	w	h	0	ARM9 System Bus	Inventory Berry Block
+000000000227EE98	w	h	0	ARM9 System Bus	Inventory PokeBall Block
+000000000227EED4	w	h	0	ARM9 System Bus	Inventory BattleItem Block
+0	S	_	1		
+000000000227EFB8	w	u	0	ARM9 System Bus	Starter Pokemon ID
+000000000227F434	d	h	0	ARM9 System Bus	Player X-Coord
+000000000227F438	d	h	0	ARM9 System Bus	Player Y-Coord
+0000000002280994	d	h	0	ARM9 System Bus	Rival Name
+0000000002283D54	d	h	0	ARM9 System Bus	Start Signature Block
+0000000002284354	d	h	0	ARM9 System Bus	End Signature Block
+000000000228435C	d	h	0	ARM9 System Bus	Step Count
+0000000002284360	d	h	0	ARM9 System Bus	Player Score?
+0	S	_	1		
+000000000228B0C4	d	h	0	ARM9 System Bus	SB-1 Footer
+000000000228B0C8	d	h	0	ARM9 System Bus	Save ID
+000000000228B0CC	d	h	0	ARM9 System Bus	SB-1 Size
+0	S	_	1		
+000000000228B0D8	d	h	0	ARM9 System Bus	LB-1 Beginning
+00000000022A6720	d	h	0	ARM9 System Bus	Card Player Score
+0	S	_	1		
+00000000022A64AC	d	h	0	ARM9 System Bus	Enemy Address
+00000000022BBFD4	d	h	0	ARM9 System Bus	Enemy PID #1
+00000000022BBFD0	d	h	0	ARM9 System Bus	Enemy Party Size?
+00000000022BBFDA	w	h	0	ARM9 System Bus	Enemy Checksum #1
+00000000022BBFDC	w	h	0	ARM9 System Bus	Enemy Shuffled Block #1
+0	S	_	1		
+0	S	_	1		FACTORY
+0	S	_	1		
+00000000022C57B8	w	h	0	ARM9 System Bus	GameMode? (0x140 = trading; 0x57BC = outside)
+000000000221FCC4	b	h	0	ARM9 System Bus	battle turn (0x1=my turn, 0x97=party menu)
+000000000236F852	w	h	0	ARM9 System Bus	move failure (0xFFFF = err)
+000000000236F7D0	w	h	0	ARM9 System Bus	battle menus (0x12C0=main, 0x1AAA=party, 0x1E80=moves)
+0	S	_	1		
+00000000022C5810	w	h	0	ARM9 System Bus	ActiveEnemy#1 ID (BLOCK_B)
+00000000022C581C	w	h	0	ARM9 System Bus	ActiveEnemy Move#1 ID
+00000000022C581E	w	h	0	ARM9 System Bus	ActiveEnemy Move#2 ID
+00000000022C5820	w	h	0	ARM9 System Bus	ActiveEnemy Move#3 ID
+00000000022C5822	w	h	0	ARM9 System Bus	ActiveEnemy Move#4 ID
+00000000022C583C	b	h	0	ARM9 System Bus	ActiveEnemy Move#1 PP (+0x2C)
+00000000022C583D	b	h	0	ARM9 System Bus	ActiveEnemy Move#2 PP
+00000000022C583E	b	h	0	ARM9 System Bus	ActiveEnemy Move#3 PP
+00000000022C583F	b	h	0	ARM9 System Bus	ActiveEnemy Move#4 PP
+00000000022C585C	w	h	0	ARM9 System Bus	ActiveEnemy Health
+00000000022C5860	w	h	0	ARM9 System Bus	ActiveEnemy MaxHealth
+0	S	_	1		
+00000000022C5750	w	h	0	ARM9 System Bus	ActiveAlly#1 ID
+00000000022C5752	w	h	0	ARM9 System Bus	ActiveAlly#1 ATK
+00000000022C5754	w	h	0	ARM9 System Bus	ActiveAlly#1 DEF
+00000000022C5756	w	h	0	ARM9 System Bus	ActiveAlly#1 Speed
+00000000022C5758	w	h	0	ARM9 System Bus	ActiveAlly#1 SPA
+00000000022C575A	w	h	0	ARM9 System Bus	ActiveAlly#1 SPD
+00000000022C5756	w	h	0	ARM9 System Bus	ActiveAlly#1 Move-1 ID
+00000000022C579C	w	h	0	ARM9 System Bus	ActiveAlly#1 Health
+00000000022C57A0	w	h	0	ARM9 System Bus	ActiveAlly#1 MaxHealth
+00000000022D3DA4	w	h	0	ARM9 System Bus	Menu ActiveAlly#1 ID
+00000000022D3DF4	w	h	0	ARM9 System Bus	Menu ActiveAlly#2 ID
+00000000022D3DF6	w	h	0	ARM9 System Bus	Menu ActiveAlly#2 ATK
+00000000022D3E44	w	h	0	ARM9 System Bus	Menu ActiveAlly#3 ID
+00000000022D3E46	w	h	0	ARM9 System Bus	Menu ActiveAlly#3 ATK
+00000000022D3E48	w	h	0	ARM9 System Bus	Menu ActiveAlly#3 DEF
+0	S	_	1		
+00000000022ADF84	w	h	0	ARM9 System Bus	FutureEnemy#1 ID (BLOCK_A)
+00000000022ADF86	w	h	0	ARM9 System Bus	FutureEnemy#1 HeldItem
+00000000022ADF90	b	h	0	ARM9 System Bus	FutureEnemy#1 Ability
+00000000022ADF88	w	h	0	ARM9 System Bus	FutureEnemy#1 Move#1 ID
+00000000022ADF8A	w	h	0	ARM9 System Bus	FutureEnemy#1 Move#2 ID
+00000000022ADF8C	w	h	0	ARM9 System Bus	FutureEnemy#1 Move#3 ID
+00000000022ADF8E	w	h	0	ARM9 System Bus	FutureEnemy#1 Move#4 ID
+00000000022ADFBC	w	h	0	ARM9 System Bus	FutureEnemy#2 ID (+0x38 or 56)
+00000000022ADFF4	w	h	0	ARM9 System Bus	FutureEnemy#3 ID
+0	S	_	1		
+00000000022AD056	w	h	0	ARM9 System Bus	Trade Ally#1 ID (BLOCK_C)
+00000000022AD058	w	h	0	ARM9 System Bus	Trade Ally#1 HeldItem
+00000000022AD06C	w	h	0	ARM9 System Bus	Trade Ally#1 Move#1 ID
+00000000022AD06E	w	h	0	ARM9 System Bus	Trade Ally#1 Move#2 ID
+00000000022AD070	w	h	0	ARM9 System Bus	Trade Ally#1 Move#3 ID
+00000000022AD072	w	h	0	ARM9 System Bus	Trade Ally#1 Move#4 ID
+00000000022AD074	b	h	0	ARM9 System Bus	Trade Ally#1 Move#1 PP
+00000000022AD075	b	h	0	ARM9 System Bus	Trade Ally#1 Move#2 PP
+00000000022AD076	b	h	0	ARM9 System Bus	Trade Ally#1 Move#3 PP
+00000000022AD077	b	h	0	ARM9 System Bus	Trade Ally#1 Move#4 PP
+00000000022AD0B2	w	h	0	ARM9 System Bus	Trade Ally#1 Health?
+00000000022AD0B4	w	h	0	ARM9 System Bus	Trade Ally#1 MaxHealth?
+00000000022AD0B6	w	h	0	ARM9 System Bus	Trade Ally#1 ATK
+00000000022AD0B8	w	h	0	ARM9 System Bus	Trade Ally#1 DEF
+00000000022AD0BA	w	h	0	ARM9 System Bus	Trade Ally#1 SPEED
+00000000022AD0BC	w	h	0	ARM9 System Bus	Trade Ally#1 SPA
+00000000022AD0BE	w	h	0	ARM9 System Bus	Trade Ally#1 SPD
+00000000022AD0C6	w	h	0	ARM9 System Bus	Trade Ally#2 ID (+0x70 or 112)
+00000000022AD136	w	h	0	ARM9 System Bus	Trade Ally#3 ID
+00000000022AD2FA	w	h	0	ARM9 System Bus	Trade Enemy#1 ID
+00000000022AD36A	w	h	0	ARM9 System Bus	Trade Enemy#2 ID
+00000000022AD3DA	w	h	0	ARM9 System Bus	Trade Enemy#3 ID
+0	S	_	1		
+00000000022ADE14	w	h	0	ARM9 System Bus	Init#1 ID (BLOCK_A)
+00000000022ADE16	w	h	0	ARM9 System Bus	Init#1 HeldItem
+00000000022ADE18	w	h	0	ARM9 System Bus	Init#1 Move#1 ID
+00000000022ADE1A	w	h	0	ARM9 System Bus	Init#1 Move#2 ID
+00000000022ADE1C	w	h	0	ARM9 System Bus	Init#1 Move#3 ID
+00000000022ADE1E	w	h	0	ARM9 System Bus	Init#1 Move#4 ID
+00000000022ADE34	b	h	0	ARM9 System Bus	Init#1 Ability
+00000000022ADE4C	w	h	0	ARM9 System Bus	Init#2 ID (+0x38 or 56)
+00000000022ADE4E	w	h	0	ARM9 System Bus	Init#2 HeldItem
+00000000022ADE50	w	h	0	ARM9 System Bus	Init#2 Move#1 ID
+00000000022ADE52	w	h	0	ARM9 System Bus	Init#2 Move#2 ID
+00000000022ADE54	w	h	0	ARM9 System Bus	Init#2 Move#3 ID
+00000000022ADE56	w	h	0	ARM9 System Bus	Init#2 Move#4 ID
+00000000022ADE84	w	h	0	ARM9 System Bus	Init#3 ID
+00000000022DFC74	w	h	0	ARM9 System Bus	InitSummary ID (full block)
+00000000022DFC76	w	h	0	ARM9 System Bus	InitSummary HeldItem
+00000000022DFC8C	w	h	0	ARM9 System Bus	InitSummary HP
+00000000022DFC90	w	h	0	ARM9 System Bus	InitSummary ATK
+00000000022DFC92	w	h	0	ARM9 System Bus	InitSummary DEF
+00000000022DFC94	w	h	0	ARM9 System Bus	InitSummary SPA
+00000000022DFC96	w	h	0	ARM9 System Bus	InitSummary SPD
+00000000022DFC98	w	h	0	ARM9 System Bus	InitSummary SPEED
+00000000022DFC9A	b	h	0	ARM9 System Bus	InitSummary Ability
+00000000022DFC9C	w	h	0	ARM9 System Bus	InitSummary Move#1 ID
+00000000022DFC9E	w	h	0	ARM9 System Bus	InitSummary Move#2 ID
+00000000022DFCA0	w	h	0	ARM9 System Bus	InitSummary Move#3 ID
+00000000022DFCA2	w	h	0	ARM9 System Bus	InitSummary Move#4 ID
+00000000022DFCA4	b	h	0	ARM9 System Bus	InitSummary Move#1 PP
+00000000022DFCA5	b	h	0	ARM9 System Bus	InitSummary Move#2 PP
+00000000022DFCA6	b	h	0	ARM9 System Bus	InitSummary Move#3 PP
+00000000022DFCA7	b	h	0	ARM9 System Bus	InitSummary Move#4 PP
+00000000022ADEBC	w	h	0	ARM9 System Bus	Init#4 ID
+00000000022ADEBE	w	h	0	ARM9 System Bus	Init#4 HeldItem
+00000000022ADEF4	w	h	0	ARM9 System Bus	Init#5 ID
+00000000022ADF2C	w	h	0	ARM9 System Bus	Init#6 ID
+0	S	_	1		
+0	S	_	1		
+00000000022AE870	d	h	0	ARM9 System Bus	enemy party size! (battle, trade)
+00000000022AE874	d	h	0	ARM9 System Bus	enemy PID !
+00000000022AE878	d	h	0	ARM9 System Bus	enemy checksum
+0	S	_	1		
+00000000022AE2C0	d	h	0	ARM9 System Bus	ally party size! (init, battle, trade)
+00000000022AE2C4	d	h	0	ARM9 System Bus	ally PID! (updates after trade)
+00000000022AE2C8	d	h	0	ARM9 System Bus	ally checksum! (stats not updated in battle)
+0	S	_	1		
+0	S	_	1		
+00000000022C5750	w	h	0	ARM9 System Bus	active ally ID
+00000000022C57BC	b	h	0	ARM9 System Bus	Status! (no confusion)
+00000000022C576A	b	h	0	ARM9 System Bus	DEF Boost
+00000000022C576B	b	h	0	ARM9 System Bus	SPEED Boost
+00000000022C5769	b	h	0	ARM9 System Bus	ATK Boost
+00000000022C57C0	b	h	0	ARM9 System Bus	confused status
+00000000022C5768	b	h	0	ARM9 System Bus	stat boost?
+00000000022C576E	b	h	0	ARM9 System Bus	stat boost?
+00000000022C576F	b	h	0	ARM9 System Bus	EVA Boost
+00000000022C576C	b	h	0	ARM9 System Bus	SPA Boost
+00000000022C576D	b	h	0	ARM9 System Bus	SPD Boost
+0	S	_	1		
+000000000236F762	w	h	0	ARM9 System Bus	party selected menu? (0x8000)
+

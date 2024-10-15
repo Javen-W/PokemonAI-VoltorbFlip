@@ -1,0 +1,35 @@
+
+
+
+
+0xC3B5A29A (92 0x5C)
+0xCE40A981 (94 0x5E) (+176,883,431)
+0xD8CAB098 (96 0x60) (+176,817,943) (-65488)
+0xE354B873 (98 0x62) (+176,818,139) (+196)
+0xEDDFBF4F (100 0x64) (+176,883,420) (+65281)
+
+02F4CD35 (104 0x68)
+0D7ED41C (106 0x6A) (+176,817,895)
+1808D8E3 (108 0x6C) (+176,817,351) (-544)
+2293E2C7 (110 0x6E) (+176,884,196) (+66845)
+EFC02BF8 (112 0x71) (+3,442,231,601) (+3265347405) (death)
+
+
+
+
+-- get_pokemon_id()
+	elseif game == 3 then --Platinum
+		enemyAddr = pointer + 0x352F4
+		if mode == 5 then
+			return pointer + 0x35AC4
+		elseif mode == 4 then
+			return memory.readdword(enemyAddr) + 0x7A0 + 0x5B0 + 0xEC*(submode-1)
+		elseif mode == 3 then
+			return memory.readdword(enemyAddr) + 0x7A0 + 0xB60 + 0xEC*(submode-1) 
+		elseif mode == 2 then
+			return memory.readdword(enemyAddr) + 0x7A0 + 0xEC*(submode-1) 
+		else
+			return pointer + 0xD094 + 0xEC*(submode-1)
+		end
+
+

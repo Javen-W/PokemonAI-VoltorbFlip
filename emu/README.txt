@@ -1,0 +1,1 @@
+Place your ROM file ('4781 - Pokemon SoulSilver (U)(Xenophobia).nds') in this directory. 

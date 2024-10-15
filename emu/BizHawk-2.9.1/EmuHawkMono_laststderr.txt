@@ -1,0 +1,1 @@
+bash: mono: command not found
