@@ -4,6 +4,7 @@ SystemID NDS
 000FA188	w	h	0	Main RAM	spawn pos Y
 0	S	_	1		
 002E5E61	b	u	0	Main RAM	tile pos
+0027C31C	d	u	0	Main RAM	collected coins
 0	S	_	1		
 002E5FF0	b	h	0	Main RAM	col-0 coins
 002E5FF1	b	h	0	Main RAM	col-1 coins
@@ -32,21 +33,25 @@ SystemID NDS
 002E5EDC	d	h	0	Main RAM	tile 0-2
 002E5EE8	d	h	0	Main RAM	tile 0-3
 002E5EF4	d	h	0	Main RAM	tile 0-4
+0	S	_	1		
 002E5F00	d	h	0	Main RAM	tile 1-0
 002E5F0C	d	h	0	Main RAM	tile 1-1
 002E5F18	d	h	0	Main RAM	tile 1-2
 002E5F24	d	h	0	Main RAM	tile 1-3
 002E5F30	d	h	0	Main RAM	tile 1-4
+0	S	_	1		
 002E5F3C	d	h	0	Main RAM	tile 2-0
 002E5F48	d	h	0	Main RAM	tile 2-1
 002E5F54	d	h	0	Main RAM	tile 2-2
 002E5F60	d	h	0	Main RAM	tile 2-3
 002E5F6C	d	h	0	Main RAM	tile 2-4
+0	S	_	1		
 002E5F78	d	h	0	Main RAM	tile 3-0
 002E5F84	d	h	0	Main RAM	tile 3-1
 002E5F90	d	h	0	Main RAM	tile 3-2
 002E5F9C	d	h	0	Main RAM	tile 3-3
 002E5FA8	d	h	0	Main RAM	tile 3-4
+0	S	_	1		
 002E5FB4	d	h	0	Main RAM	tile 4-0
 002E5FC0	d	h	0	Main RAM	tile 4-1
 002E5FCC	d	h	0	Main RAM	tile 4-2
