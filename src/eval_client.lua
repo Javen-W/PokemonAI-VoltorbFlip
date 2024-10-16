@@ -102,6 +102,25 @@ local function eval_state()
     return str_to_table(comm.socketServerResponse())
 end
 
+local function read_tile(idx)
+	local addr = 0x2E5EC4 + (idx * 0xC)
+	return mainmemory.read_u32_le(addr)
+end
+
+local function read_tiles()
+	local tiles_struct = {}
+	for i = 0, 24, 1 do
+		tiles_struct[i] = read_tile(i)
+	end
+	return tiles_struct
+end
+
+local function read_game_state()
+	local state_struct = { }
+	
+	return state_struct
+end
+
 local function read_cursor_index()
 	return mainmemory.read_u8(0x2E5E61)
 end
