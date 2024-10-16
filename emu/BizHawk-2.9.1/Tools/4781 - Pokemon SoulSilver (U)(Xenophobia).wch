@@ -3,7 +3,7 @@ SystemID NDS
 000FA184	w	h	0	Main RAM	spawn pos X
 000FA188	w	h	0	Main RAM	spawn pos Y
 0	S	_	1		
-002E5E61	b	u	0	Main RAM	tile pos
+002E5E61	b	u	0	Main RAM	cursor tile pos
 0027C31C	d	u	0	Main RAM	collected coins
 0	S	_	1		
 002E5FF0	b	h	0	Main RAM	col-0 coins

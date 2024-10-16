@@ -92,8 +92,6 @@ local function advance_frames(instruct, cnt)
     for i=0, cnt, 1 do
         emu.frameadvance()
         joypad.set(instruct)
-        ttl = ttl - 1
-        refresh_gui()
     end
 end
 
@@ -102,6 +100,34 @@ local function eval_state()
     read_inputstate()
     comm.socketServerSend("STATE"..serialize_table(input_state))  -- send state to eval server
     return str_to_table(comm.socketServerResponse())
+end
+
+local function read_cursor_index()
+	return mainmemory.read_u8(0x2E5E61)
+end
+
+local function select_tile(t_idx)
+	local c_idx = read_cursor_index()
+	while c_idx ~= t_idx do
+		local c_row = math.floor(c_idx / 5)
+		local c_col = c_idx % 5
+		local t_row = math.floor(t_idx / 5)
+		local t_col = t_idx % 5
+		
+		-- print(c_row, t_row, c_col, t_col)
+		
+		if c_row < t_row then
+			advance_frames({["Down"] = "True"}, 1)
+		elseif c_row > t_row then
+			advance_frames({["Up"] = "True"}, 1)
+		elseif c_col < t_col then
+			advance_frames({["Right"] = "True"}, 1)
+		elseif c_col > t_col then
+			advance_frames({["Left"] = "True"}, 1)
+		end
+		
+		c_idx = read_cursor_index()
+	end
 end
 
 
@@ -141,7 +167,7 @@ function GameLoop()
 end
 
 
-GameLoop()
+-- GameLoop()
 --[[
 -- repeat game loop until evaluation server finishes
 print("Is client connected to socket server?")
