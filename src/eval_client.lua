@@ -126,14 +126,16 @@ local function read_cursor_index()
 end
 
 local function select_tile(t_idx)
+	if t_idx < 0 or t_idx >= 25 then
+		return
+	end
+	
 	local c_idx = read_cursor_index()
 	while c_idx ~= t_idx do
 		local c_row = math.floor(c_idx / 5)
 		local c_col = c_idx % 5
 		local t_row = math.floor(t_idx / 5)
 		local t_col = t_idx % 5
-		
-		-- print(c_row, t_row, c_col, t_col)
 		
 		if c_row < t_row then
 			advance_frames({["Down"] = "True"}, 1)
@@ -144,9 +146,10 @@ local function select_tile(t_idx)
 		elseif c_col > t_col then
 			advance_frames({["Left"] = "True"}, 1)
 		end
-		
 		c_idx = read_cursor_index()
 	end
+	
+	advance_frames({["A"] = "True"}, 20)
 end
 
 
@@ -185,7 +188,7 @@ function GameLoop()
     -- return fitness
 end
 
-
+select_tile(24)
 -- GameLoop()
 --[[
 -- repeat game loop until evaluation server finishes
