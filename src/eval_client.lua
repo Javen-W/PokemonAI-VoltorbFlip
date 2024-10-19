@@ -132,8 +132,39 @@ local function read_game_state()
 	return state_struct
 end
 
+local function read_coin_counts()
+	local coins = { }
+	for i = 0, 9, 1 do
+		local addr = 0x2E5FF0 + (i * 0x1)
+		coins[i] = mainmemory.read_u32_le(addr)
+	end
+	return coins
+end
+
+local function read_bomb_counts()
+	local bombs = { }
+	for i = 0, 9, 1 do
+		local addr = 0x2E5FFA + (i * 0x1)
+		bombs[i] = mainmemory.read_u32_le(addr)
+	end
+	return bombs
+end
+
 local function read_cursor_index()
 	return mainmemory.read_u8(0x2E5E61)
+end
+
+local function init_visibility_state()
+	local visibility_state = {
+		tiles = { },
+		coins = read_coin_counts(),
+		bombs = read_bomb_counts(),
+	}
+	for i = 0, 24, 1 do
+		visibility_state.tiles[i] = 0x0
+	end
+	
+	return visibility_state
 end
 
 local function select_tile(t_idx)
@@ -167,17 +198,27 @@ local function select_tile(t_idx)
 end
 
 local function select_coin_tiles()
+	print("Starting level.")
+	local visibility_state = init_visibility_state()	
 	local tiles = read_tiles()
 	local sorted_tiles = sort_by_values(tiles, function(a, b) return a < b end)
+	
 	for _, idx in pairs(sorted_tiles) do
 		local item = tiles[idx]
 		if item ~= 4 then
 			print(idx, item)
 			select_tile(idx)
+			visibility_state.tiles[idx] = item
+			-- screenshot
+		else
+			print(idx, item)
+			visibility_state.tiles[idx] = item
+			-- no screenshot
 		end
 	end
+	
 	print("Level clear.")
-	print()
+	-- screenshot
 end
 
 
