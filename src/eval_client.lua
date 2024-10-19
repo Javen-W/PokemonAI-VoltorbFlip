@@ -52,6 +52,17 @@ local function serialize_table(tabl, indent, nl)
     return str
 end
 
+local function sort_by_values(tbl, sort_function)
+    local keys = {}
+    for key in pairs(tbl) do
+        table.insert(keys, key)
+    end
+    table.sort(keys, function(a, b)
+        return sort_function(tbl[a], tbl[b]) end
+    )
+    return keys
+end
+
 local function decrypt(seed, addr, words)
 	-- decrypt pokemon data bytes
 	local X = { seed }
@@ -150,6 +161,23 @@ local function select_tile(t_idx)
 	end
 	
 	advance_frames({["A"] = "True"}, 20)
+	advance_frames({}, 1)
+	advance_frames({["A"] = "True"}, 20)
+	advance_frames({}, 1)
+end
+
+local function select_coin_tiles()
+	local tiles = read_tiles()
+	local sorted_tiles = sort_by_values(tiles, function(a, b) return a < b end)
+	for _, idx in pairs(sorted_tiles) do
+		local item = tiles[idx]
+		if item ~= 4 then
+			print(idx, item)
+			select_tile(idx)
+		end
+	end
+	print("Level clear.")
+	print()
 end
 
 
@@ -188,7 +216,7 @@ function GameLoop()
     -- return fitness
 end
 
-select_tile(24)
+select_coin_tiles()
 -- GameLoop()
 --[[
 -- repeat game loop until evaluation server finishes
