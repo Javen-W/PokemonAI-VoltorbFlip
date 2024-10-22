@@ -226,11 +226,11 @@ local function select_coin_tiles()
 	
 	for _, idx in pairs(sorted_tiles) do
 		local item = tiles[idx]
-		advance_dialogue_state()
 		if item ~= 4 then
 			print(idx, item)
 			select_tile(idx)
 			visibility_state.tiles[idx] = item
+			advance_dialogue_state()
 			-- screenshot
 		else
 			print(idx, item)
@@ -239,6 +239,8 @@ local function select_coin_tiles()
 		end
 	end
 	print("Level clear.")
+	advance_frames({}, 200)
+	advance_dialogue_state()
 	-- screenshot
 end
 
