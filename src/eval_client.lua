@@ -232,6 +232,8 @@ local function select_coin_tiles()
 			visibility_state.tiles[idx] = item
 			advance_dialogue_state()
 			-- screenshot
+			-- local decision = comm.socketServerScreenShotResponse()
+			print("screenshot.")
 		else
 			print(idx, item)
 			visibility_state.tiles[idx] = item
@@ -242,6 +244,12 @@ local function select_coin_tiles()
 	advance_frames({}, 200)
 	advance_dialogue_state()
 	-- screenshot
+	print("screenshot.")
+	while not (in_menu_dialogue()) do
+		advance_frames({["A"] = "True"}, 1)
+		advance_frames({}, 5)
+	end
+	advance_dialogue_state()
 end
 
 
@@ -252,29 +260,20 @@ local LOAD_SLOT = 1  -- the emulator savestate slot to load
 
 function GameLoop()
     log("Beginning game loop...")
-
     -- initialize global vars
 
     -- load save state
     -- log("Loading save slot "..LOAD_SLOT.."...")
     -- savestate.loadslot(LOAD_SLOT)
 
-	-- testing
-	advance_dialogue_state()
-	select_coin_tiles()
-
     -- loop until a round is lost or TTL runs out
-	--[[
     while true do
-        -- check game state
-		
-        -- state advancement
-		-- local decision = comm.socketServerScreenShotResponse()
+		advance_dialogue_state()
+		select_coin_tiles()
 
-        -- advance single frame
-        advance_frames({}, 1)
+        print("Advancing to next level...")
+		advance_frames({}, 200)
     end
-    --]]
 
     -- end game loop
     log("Finished game loop.")
