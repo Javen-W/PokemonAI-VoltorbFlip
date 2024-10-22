@@ -162,6 +162,13 @@ local function in_menu_dialogue()
 	return read_dialogue_state() == 0xD008
 end
 
+local function advance_dialogue_state()
+	while (in_menu_dialogue() or in_game_dialogue()) do
+		advance_frames({["A"] = "True"}, 1)
+		advance_frames({}, 5)
+	end
+end
+
 local function read_cursor_index()
 	return mainmemory.read_u8(0x2E5E61)
 end
@@ -193,12 +200,16 @@ local function select_tile(t_idx)
 		
 		if c_row < t_row then
 			advance_frames({["Down"] = "True"}, 1)
+			advance_frames({}, 1)
 		elseif c_row > t_row then
 			advance_frames({["Up"] = "True"}, 1)
+			advance_frames({}, 1)
 		elseif c_col < t_col then
 			advance_frames({["Right"] = "True"}, 1)
+			advance_frames({}, 1)
 		elseif c_col > t_col then
 			advance_frames({["Left"] = "True"}, 1)
+			advance_frames({}, 1)
 		end
 		c_idx = read_cursor_index()
 	end
@@ -215,6 +226,7 @@ local function select_coin_tiles()
 	
 	for _, idx in pairs(sorted_tiles) do
 		local item = tiles[idx]
+		advance_dialogue_state()
 		if item ~= 4 then
 			print(idx, item)
 			select_tile(idx)
@@ -246,6 +258,7 @@ function GameLoop()
     -- savestate.loadslot(LOAD_SLOT)
 
 	-- testing
+	advance_dialogue_state()
 	select_coin_tiles()
 
     -- loop until a round is lost or TTL runs out
