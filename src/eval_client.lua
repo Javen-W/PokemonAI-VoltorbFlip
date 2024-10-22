@@ -263,8 +263,8 @@ function GameLoop()
     -- initialize global vars
 
     -- load save state
-    -- log("Loading save slot "..LOAD_SLOT.."...")
-    -- savestate.loadslot(LOAD_SLOT)
+    log("Loading save slot "..LOAD_SLOT.."...")
+    savestate.loadslot(LOAD_SLOT)
 
     -- loop until a round is lost or TTL runs out
     while true do
