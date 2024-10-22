@@ -58,4 +58,6 @@ SystemID NDS
 002E5FD8	d	h	0	Main RAM	tile 4-3
 002E5FE4	d	h	0	Main RAM	tile 4-4
 0	S	_	1		
+001D0EDE	w	h	0	Main RAM	Menu state (0xFFF8)
+002C42B6	w	h	0	Main RAM	Dialouge State (Menu=0xD008; In-Game=0xD002)
 

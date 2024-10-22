@@ -150,6 +150,18 @@ local function read_bomb_counts()
 	return bombs
 end
 
+local function read_dialogue_state()
+	return mainmemory.read_u16_le(0x2C42B6)
+end
+
+local function in_game_dialogue()
+	return read_dialogue_state() == 0xD002
+end
+
+local function in_menu_dialogue()
+	return read_dialogue_state() == 0xD008
+end
+
 local function read_cursor_index()
 	return mainmemory.read_u8(0x2E5E61)
 end
@@ -171,7 +183,7 @@ local function select_tile(t_idx)
 	if t_idx < 0 or t_idx >= 25 then
 		return
 	end
-	
+	-- advance to correct tile index
 	local c_idx = read_cursor_index()
 	while c_idx ~= t_idx do
 		local c_row = math.floor(c_idx / 5)
@@ -190,9 +202,7 @@ local function select_tile(t_idx)
 		end
 		c_idx = read_cursor_index()
 	end
-	
-	advance_frames({["A"] = "True"}, 20)
-	advance_frames({}, 1)
+	-- select tile action
 	advance_frames({["A"] = "True"}, 20)
 	advance_frames({}, 1)
 end
@@ -216,32 +226,32 @@ local function select_coin_tiles()
 			-- no screenshot
 		end
 	end
-	
 	print("Level clear.")
 	-- screenshot
 end
 
 
-local LOAD_SLOT = 2  -- the emulator save slot to load
-
 -- ####################################
 -- ####         GAME LOOP          ####
 -- ####################################
+local LOAD_SLOT = 1  -- the emulator savestate slot to load
+
 function GameLoop()
     log("Beginning game loop...")
 
     -- initialize global vars
 
     -- load save state
-    log("Loading save slot "..LOAD_SLOT.."...")
-    savestate.loadslot(LOAD_SLOT)
-    -- client.invisibleemulation(true)
+    -- log("Loading save slot "..LOAD_SLOT.."...")
+    -- savestate.loadslot(LOAD_SLOT)
+
+	-- testing
+	select_coin_tiles()
 
     -- loop until a round is lost or TTL runs out
+	--[[
     while true do
         -- check game state
-		
-        -- is evaluation over?
 		
         -- state advancement
 		-- local decision = comm.socketServerScreenShotResponse()
@@ -249,16 +259,15 @@ function GameLoop()
         -- advance single frame
         advance_frames({}, 1)
     end
+    --]]
 
-    -- end game loopx
+    -- end game loop
     log("Finished game loop.")
-    -- comm.socketServerSend("FITNESS:"..fitness)
-    -- advance_frames({}, 250) -- buffer while server prepares
-    -- return fitness
 end
 
-select_coin_tiles()
--- GameLoop()
+
+GameLoop()
+
 --[[
 -- repeat game loop until evaluation server finishes
 print("Is client connected to socket server?")
