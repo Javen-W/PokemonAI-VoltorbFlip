@@ -38,7 +38,7 @@ class EvaluationServer:
         socket.setdefaulttimeout(300)
 
         # evaluation vars
-        self.client_ps = None  # emulator client process ID(s)
+        self.client_ps = []  # emulator client process ID(s)
         self.logger = self._init_logger()  # init the logger
 
         # evaluation mode parameters
