@@ -1,10 +1,12 @@
 import logging
 import platform
 import os
+import io
 import signal
 import socket
 import subprocess
 import numpy as np
+from PIL import Image
 
 
 class EvaluationServer:
@@ -28,6 +30,7 @@ class EvaluationServer:
     PNG_HEADER = (b"\x89PNG", 7)
     GAMESTATE_HEADER = (b"STATE", 5)
     READY_STATE = b"5 READY"
+    ACK_HEADER = b"ACK"
     SEED_STATE = (b"SEED", 4)
     FINISH_STATE = b"8 FINISHED"
     FITNESS_HEADER = (b"FITNESS:", 8)
@@ -125,8 +128,8 @@ class EvaluationServer:
                 # is msg a state screenshot?
                 elif msg[:self.PNG_HEADER[1]] == self.PNG_HEADER[0]:
                     self.process_screenshot(msg)
-                    # respond to client with decision
-                    # client.sendall(b'' + bytes(f"{len(decision)} {decision}", 'utf-8'))
+                    # respond to client with acknowledgement
+                    self.send_response(client, self.ACK_HEADER)
 
         # finished evaluating client
         return None
@@ -148,9 +151,16 @@ class EvaluationServer:
         """
         self.logger.debug("Processing game screenshot...")
         # read image and convert to grayscale
-        # img = PIL.Image.open(io.BytesIO(png)).convert('L')
+        img = Image.open(io.BytesIO(png)).convert('L')
         # img.show()
-        # im = np.array(img)
+        img = np.array(img)
+
+    @classmethod
+    def send_response(cls, client, msg):
+        """
+        Send response message to client.
+        """
+        client.sendall(b'' + bytes(f"{len(msg)} {msg}", 'utf-8'))
 
     @classmethod
     def sort_dict(cls, item: dict):
