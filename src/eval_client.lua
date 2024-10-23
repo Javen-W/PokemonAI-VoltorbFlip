@@ -157,6 +157,10 @@ local function in_menu_dialogue()
 	return read_dialogue_state() == 0xD008
 end
 
+local function in_tile_selection()
+	return read_dialogue_state() == 0x0000
+end
+
 local function advance_dialogue_state()
 	while (in_menu_dialogue() or in_game_dialogue()) do
 		advance_frames({["A"] = "True"}, 1)
@@ -182,14 +186,14 @@ local function init_visibility_state()
 end
 
 local function send_game_state(input_state)
-	advance_frames({}, 100)
+	advance_frames({}, 100) -- buffer while potential dialogue loads
+	advance_dialogue_state()
 	print("sending screenshot & game state...")
 	comm.socketServerScreenShotResponse()
     comm.socketServerSend(GAMESTATE_HEADER..serialize_table(input_state, "", ""))  -- send state to eval server
     -- local response = str_to_table(comm.socketServerResponse())
 	local response = comm.socketServerResponse()
 	print("screenshot & state response: "..response)
-	-- advance_frames({}, 100)
 	return response
 end
 
