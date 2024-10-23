@@ -186,6 +186,11 @@ local function init_visibility_state()
 	return visibility_state
 end
 
+local function send_game_state()
+	comm.socketServerScreenShotResponse()
+	print("screenshot.")
+end
+
 local function select_tile(t_idx)
 	if t_idx < 0 or t_idx >= 25 then
 		return
@@ -232,8 +237,7 @@ local function select_coin_tiles()
 			visibility_state.tiles[idx] = item
 			advance_dialogue_state()
 			-- screenshot
-			-- local decision = comm.socketServerScreenShotResponse()
-			print("screenshot.")
+			send_game_state()
 		else
 			print(idx, item)
 			visibility_state.tiles[idx] = item
@@ -244,7 +248,7 @@ local function select_coin_tiles()
 	advance_frames({}, 200)
 	advance_dialogue_state()
 	-- screenshot
-	print("screenshot.")
+	send_game_state()
 	while not (in_menu_dialogue()) do
 		advance_frames({["A"] = "True"}, 1)
 		advance_frames({}, 5)
@@ -280,9 +284,7 @@ function GameLoop()
 end
 
 
-GameLoop()
-
---[[
+--GameLoop()
 -- repeat game loop until evaluation server finishes
 print("Is client connected to socket server?")
 print(comm.socketServerIsConnected())
@@ -300,4 +302,3 @@ while true do
         client.exit()
     end
 end
---]]

@@ -6,7 +6,9 @@ import signal
 import socket
 import subprocess
 import numpy as np
+import PIL
 from PIL import Image
+from matplotlib import pyplot as plt
 
 
 class EvaluationServer:
@@ -23,11 +25,13 @@ class EvaluationServer:
     """
     # Edge Detection Kernel
     KERNEL = np.array([[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]])
+    TRAINING_PATH = './training_data/'
+    STATE_INDEX = 0
 
     """
     Network packet header constants.
     """
-    PNG_HEADER = (b"\x89PNG", 7)
+    PNG_HEADER = (b"\x89PNG", 4)
     GAMESTATE_HEADER = (b"STATE", 5)
     READY_STATE = b"5 READY"
     ACK_HEADER = b"ACK"
@@ -106,7 +110,7 @@ class EvaluationServer:
         finished = False
         while not finished:
             # receive client buffered message
-            data = client.recv(8192)
+            data = client.recv(16000)
 
             # client finished sending data
             if not data:
@@ -114,7 +118,6 @@ class EvaluationServer:
 
             # Parse received data into individual message(s) and process
             for msg in self._parse_msgs(data):
-
                 # is msg a fitness score?
                 if msg[:self.FITNESS_HEADER[1]] == self.FITNESS_HEADER[0]:
                     self.logger.debug("Client is finished evaluating...")
@@ -151,9 +154,13 @@ class EvaluationServer:
         """
         self.logger.debug("Processing game screenshot...")
         # read image and convert to grayscale
-        img = Image.open(io.BytesIO(png)).convert('L')
-        # img.show()
-        img = np.array(img)
+        img = PIL.Image.open(io.BytesIO(png)).convert('L')
+        im = np.array(img)
+        
+        # save training image
+        path = os.path.join(self.TRAINING_PATH, f"{self.STATE_INDEX}.png")
+        self.save_img(im, path)
+        self.STATE_INDEX += 1
 
     @classmethod
     def send_response(cls, client, msg):
@@ -249,6 +256,12 @@ class EvaluationServer:
         except Exception:
             # self.logger.error("close_server() failed.")
             return
+
+    def save_img(self, img, path):
+        # img = Image.fromarray(img.astype(np.uint8))
+        PIL.Image.fromarray(np.uint8(img * 255)).save(path)
+        # plt.imsave(path, im, cmap='gray')
+        self.logger.debug(f"Saved image: {path}")
 
 
 class ConnectionClosedException(Exception):
