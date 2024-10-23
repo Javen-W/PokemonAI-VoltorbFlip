@@ -36,7 +36,8 @@ class EvaluationServer:
     Network packet header constants.
     """
     PNG_HEADER = (b"\x89PNG", 4)
-    GAMESTATE_HEADER = (b"STATE:", 6)
+    VISIBLE_STATE_HEADER = (b"VISIBLE_STATE:", 14)
+    HIDDEN_STATE_HEADER = (b"HIDDEN_STATE:", 13)
     READY_STATE = b"5 READY"
     SUCCESS_STATE = b"SUCCESS"
     SEED_STATE = (b"SEED", 4)
@@ -133,10 +134,19 @@ class EvaluationServer:
                     # respond to client with success
                     self.send_response(client, self.SUCCESS_STATE)
 
-                # is message a state struct?
-                elif msg[:self.GAMESTATE_HEADER[1]] == self.GAMESTATE_HEADER[0]:
-                    trimmed_msg = msg[self.GAMESTATE_HEADER[1]:]
-                    self.process_gamestate(trimmed_msg)
+                # is message a visible state struct?
+                elif msg[:self.VISIBLE_STATE_HEADER[1]] == self.VISIBLE_STATE_HEADER[0]:
+                    trimmed_msg = msg[self.VISIBLE_STATE_HEADER[1]:]
+                    csv_path = os.path.join(self.TRAINING_PATH, f"visible_states.csv")
+                    self.process_gamestate(trimmed_msg, csv_path)
+                    # respond to client with success
+                    self.send_response(client, self.SUCCESS_STATE)
+
+                # is message a hidden state struct?
+                elif msg[:self.HIDDEN_STATE_HEADER[1]] == self.HIDDEN_STATE_HEADER[0]:
+                    trimmed_msg = msg[self.HIDDEN_STATE_HEADER[1]:]
+                    csv_path = os.path.join(self.TRAINING_PATH, f"hidden_states.csv")
+                    self.process_gamestate(trimmed_msg, csv_path)
                     # respond to client with success
                     self.send_response(client, self.SUCCESS_STATE)
 
@@ -168,10 +178,10 @@ class EvaluationServer:
         path = os.path.join(self.TRAINING_PATH, f"screenshots/{self.STATE_INDEX}.png")
         self.save_img(im, path)
 
-        # TODO advance state index if not in training mode
-        # self.STATE_INDEX += 1
+        # advance state index
+        self.STATE_INDEX += 1
 
-    def process_gamestate(self, state: bytes):
+    def process_gamestate(self, state: bytes, csv_path: str):
         """
         """
         self.logger.debug("Evaluating game state...")
@@ -180,13 +190,10 @@ class EvaluationServer:
         json_state['state_index'] = self.STATE_INDEX
         self.logger.debug(json_state)
 
+        # TODO: if in training mode
         # append data frame to CSV file
         df = pd.DataFrame.from_records([json_state]).set_index('state_index')
-        path = os.path.join(self.TRAINING_PATH, f"visible_states.csv")
-        df.to_csv(path, mode='a', index=True, header=self.STATE_INDEX == 0)
-
-        # increment state index
-        self.STATE_INDEX += 1
+        df.to_csv(csv_path, mode='a', index=True, header=self.STATE_INDEX == 0)
 
     @classmethod
     def send_response(cls, client, msg):

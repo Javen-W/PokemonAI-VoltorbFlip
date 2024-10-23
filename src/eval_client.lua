@@ -12,7 +12,8 @@ References:
 --]]
 local READY_STATE = "READY"
 local FINISHED_STATE = "FINISHED"
-local GAMESTATE_HEADER = "STATE:"
+local VISIBLE_STATE_HEADER = "VISIBLE_STATE:"
+local HIDDEN_STATE_HEADER = "HIDDEN_STATE:"
 local LOG_HEADER = "LOG:"
 local LOAD_SLOT = 1  -- the emulator savestate slot to load
 
@@ -181,20 +182,28 @@ local function init_visibility_state()
 	for i = 0, 24, 1 do
 		visibility_state.tiles[""..i] = 0x0
 	end
-	
 	return visibility_state
 end
 
-local function send_game_state(input_state)
+local function read_hidden_state()
+	local hidden_state = {
+		tiles = read_tiles(),
+		coins = read_coin_counts(),
+		bombs = read_bomb_counts(),
+	}
+	return hidden_state
+end
+
+local function send_game_states(visible_state, hidden_state)
 	advance_frames({}, 100) -- buffer while potential dialogue loads
 	advance_dialogue_state()
-	print("sending screenshot & game state...")
+	print("sending screenshot & game states...")
+    comm.socketServerSend(VISIBLE_STATE_HEADER..serialize_table(visible_state))
+	comm.socketServerResponse()
+    comm.socketServerSend(HIDDEN_STATE_HEADER..serialize_table(hidden_state))
+	comm.socketServerResponse()
 	comm.socketServerScreenShotResponse()
-    comm.socketServerSend(GAMESTATE_HEADER..serialize_table(input_state, "", ""))  -- send state to eval server
-    -- local response = str_to_table(comm.socketServerResponse())
-	local response = comm.socketServerResponse()
-	print("screenshot & state response: "..response)
-	return response
+	return true
 end
 
 local function select_tile(t_idx)
@@ -231,22 +240,26 @@ end
 
 local function select_coin_tiles()
 	print("Starting level.")
-	local visibility_state = init_visibility_state()	
+	local visible_state = init_visibility_state()
+	local hidden_state = read_hidden_state()
 	local tiles = read_tiles()
 	local sorted_tiles = sort_by_values(tiles, function(a, b) return a < b end)
-	
+
+	-- screenshot
+	send_game_states(visible_state, hidden_state)
+
 	for _, idx in pairs(sorted_tiles) do
 		local item = tiles[idx]
 		if item ~= 4 then
 			print(idx, item)
 			select_tile(tonumber(idx))
-			visibility_state.tiles[idx] = item
+			visible_state.tiles[idx] = item
 			advance_dialogue_state()
 			-- screenshot
-			send_game_state(visibility_state)
+			send_game_states(visible_state, hidden_state)
 		else
 			print(idx, item)
-			visibility_state.tiles[idx] = item
+			visible_state.tiles[idx] = item
 			-- no screenshot
 		end
 	end
@@ -254,7 +267,7 @@ local function select_coin_tiles()
 	advance_frames({}, 200)
 	advance_dialogue_state()
 	-- screenshot
-	send_game_state(visibility_state)
+	send_game_states(visible_state, hidden_state)
 	while not (in_menu_dialogue()) do
 		advance_frames({["A"] = "True"}, 1)
 		advance_frames({}, 5)
