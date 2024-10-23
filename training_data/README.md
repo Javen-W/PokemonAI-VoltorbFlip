@@ -1,0 +1,7 @@
+The `screenshots/` directory contains cropped gray-scale screenshots of sample game states. The name of each image file corresponds to its respective `state_index` value.
+
+`hidden_states.csv` and `visible_states.csv` contain the numerical state values for each sample screenshot. The `state_index` feature indicates what sample screenshot the given row belongs to. The hidden state refers to the values of all game variables, including the actual value of any hidden or visible tile. The visible state refers to only the information which is actively visible for any given state screenshot.
+
+The features `bombs_[0-9]` and  `coins_[0-9]` refer to the total number of bombs and coins to be found for each row or column, respectively. Indices `[0-4]` belong to the columns from left-to-right, and `[5-9]` belong to the rows from top-to-bottom. For example, `bombs_0` refers to the number of bombs to be found in the left-most column, and `coins_9` refers to the total number of coins to be found in the bottom-most row.
+
+The features `tiles_[0-24]` refer to the respective tile values for any given state sample. There are 25 tiles in total, with their indices ordered from left-to-right, then top-to-bottom. A tile value of `0` means 'hidden' or unknown information, and are only found in the visible state data; values `1-3` are coins; and bombs are `4`.
