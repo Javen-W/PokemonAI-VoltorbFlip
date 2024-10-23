@@ -7,6 +7,14 @@ References:
 	- https://tasvideos.org/UserFiles/Info/45193606014900979
 --]]
 
+--[[
+	### CONSTANTS ###
+--]]
+local READY_STATE = "READY"
+local FINISHED_STATE = "FINISHED"
+local GAMESTATE_HEADER = "STATE:"
+local LOG_HEADER = "LOG:"
+local LOAD_SLOT = 1  -- the emulator savestate slot to load
 
 -- used in PRNG state calculation
 local function mult32(a, b)
@@ -21,7 +29,7 @@ local function mult32(a, b)
 end
 
 local function log(msg)
-    comm.socketServerSend("LOG:"..tostring(msg))
+    comm.socketServerSend(LOG_HEADER..tostring(msg))
 end
 
 function table.shallow_copy(t)
@@ -104,13 +112,6 @@ local function advance_frames(instruct, cnt)
         emu.frameadvance()
         joypad.set(instruct)
     end
-end
-
--- sends input state to server for evaluation
-local function eval_state()
-    read_inputstate()
-    comm.socketServerSend("STATE"..serialize_table(input_state))  -- send state to eval server
-    return str_to_table(comm.socketServerResponse())
 end
 
 local function read_tile(idx)
@@ -260,8 +261,6 @@ end
 -- ####################################
 -- ####         GAME LOOP          ####
 -- ####################################
-local LOAD_SLOT = 1  -- the emulator savestate slot to load
-
 function GameLoop()
     log("Beginning game loop...")
     -- initialize global vars
@@ -291,13 +290,13 @@ print(comm.socketServerIsConnected())
 print(comm.socketServerGetInfo())
 
 while true do
-    comm.socketServerSend("READY")
+    comm.socketServerSend(READY_STATE)
     local server_state = comm.socketServerResponse()
     print("Server State: "..server_state)
-    if server_state == "READY" then
+    if server_state == READY_STATE then
         -- start game loop
     	GameLoop()
-    elseif server_state == "FINISHED" then
+    elseif server_state == FINISHED_STATE then
         -- Close emulator
         client.exit()
     end
