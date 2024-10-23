@@ -171,10 +171,9 @@ class EvaluationServer:
     def process_gamestate(self, state: bytes):
         self.logger.debug("Evaluating game state...")
         # read and sort input state
-        json_state = json.loads(state)
-        json_state = self.sort_dict(json_state)
+        json_state = self.flatten_dict(self.sort_dict(json.loads(state)))
+        json_state['state_index'] = self.STATE_INDEX
         self.logger.debug(json_state)
-        print(f"{self.STATE_INDEX}: {json_state}")
 
         # increment state index
         self.STATE_INDEX += 1
@@ -185,6 +184,18 @@ class EvaluationServer:
         Send response message to client.
         """
         client.sendall(b'' + bytes(f"{len(msg)} {msg}", 'utf-8'))
+
+    @classmethod
+    def flatten_dict(cls, x: dict):
+        """
+        Converts a 2D dictionary into 1D with combined key names.
+        """
+        output = {}
+        for k1 in x:
+            for k2 in x[k1]:
+                k3 = f"{k1}_{k2}"
+                output[k3] = x[k1][k2]
+        return output
 
     @classmethod
     def sort_dict(cls, item: dict):
