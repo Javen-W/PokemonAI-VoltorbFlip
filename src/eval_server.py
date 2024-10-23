@@ -1,3 +1,4 @@
+import json
 import logging
 import platform
 import os
@@ -27,14 +28,15 @@ class EvaluationServer:
     KERNEL = np.array([[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]])
     TRAINING_PATH = './training_data/'
     STATE_INDEX = 0
+    IMAGE_DIMS = (256, 384)  # width x height
 
     """
     Network packet header constants.
     """
     PNG_HEADER = (b"\x89PNG", 4)
-    GAMESTATE_HEADER = (b"STATE", 5)
+    GAMESTATE_HEADER = (b"STATE:", 6)
     READY_STATE = b"5 READY"
-    ACK_HEADER = b"ACK"
+    SUCCESS_STATE = b"SUCCESS"
     SEED_STATE = (b"SEED", 4)
     FINISH_STATE = b"8 FINISHED"
     FITNESS_HEADER = (b"FITNESS:", 8)
@@ -116,23 +118,25 @@ class EvaluationServer:
             if not data:
                 raise ConnectionClosedException
 
-            # Parse received data into individual message(s) and process
+            # parse received data into individual message(s) and process
             for msg in self._parse_msgs(data):
-                # is msg a fitness score?
-                if msg[:self.FITNESS_HEADER[1]] == self.FITNESS_HEADER[0]:
-                    self.logger.debug("Client is finished evaluating...")
-                    fitness = float(msg[self.FITNESS_HEADER[1]:])
-                    finished = True
 
-                # is msg a log?
-                elif msg[:self.LOG_HEADER[1]] == self.LOG_HEADER[0]:
+                # is message a log?
+                if msg[:self.LOG_HEADER[1]] == self.LOG_HEADER[0]:
                     self.logger.debug(msg[self.LOG_HEADER[1]:])
 
-                # is msg a state screenshot?
+                # is message a state screenshot?
                 elif msg[:self.PNG_HEADER[1]] == self.PNG_HEADER[0]:
                     self.process_screenshot(msg)
-                    # respond to client with acknowledgement
-                    self.send_response(client, self.ACK_HEADER)
+                    # respond to client with success
+                    self.send_response(client, self.SUCCESS_STATE)
+
+                # is message a state struct?
+                elif msg[:self.GAMESTATE_HEADER[1]] == self.GAMESTATE_HEADER[0]:
+                    trimmed_msg = msg[self.GAMESTATE_HEADER[1]:]
+                    self.process_gamestate(trimmed_msg)
+                    # respond to client with success
+                    self.send_response(client, self.SUCCESS_STATE)
 
         # finished evaluating client
         return None
@@ -156,10 +160,23 @@ class EvaluationServer:
         # read image and convert to grayscale
         img = PIL.Image.open(io.BytesIO(png)).convert('L')
         im = np.array(img)
-        
+
         # save training image
         path = os.path.join(self.TRAINING_PATH, f"{self.STATE_INDEX}.png")
         self.save_img(im, path)
+
+        # TODO advance state index if not in training mode
+        # self.STATE_INDEX += 1
+
+    def process_gamestate(self, state: bytes):
+        self.logger.debug("Evaluating game state...")
+        # read and sort input state
+        json_state = json.loads(state)
+        json_state = self.sort_dict(json_state)
+        self.logger.debug(json_state)
+        print(f"{self.STATE_INDEX}: {json_state}")
+
+        # increment state index
         self.STATE_INDEX += 1
 
     @classmethod
