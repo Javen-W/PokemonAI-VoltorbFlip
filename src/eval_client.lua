@@ -122,22 +122,16 @@ end
 local function read_tiles()
 	local tiles_struct = {}
 	for i = 0, 24, 1 do
-		tiles_struct[i] = read_tile(i)
+		tiles_struct[""..i] = read_tile(i)
 	end
 	return tiles_struct
-end
-
-local function read_game_state()
-	local state_struct = { }
-	
-	return state_struct
 end
 
 local function read_coin_counts()
 	local coins = { }
 	for i = 0, 9, 1 do
 		local addr = 0x2E5FF0 + (i * 0x1)
-		coins[i] = mainmemory.read_u32_le(addr)
+		coins[""..i] = mainmemory.read_u8(addr)
 	end
 	return coins
 end
@@ -146,7 +140,7 @@ local function read_bomb_counts()
 	local bombs = { }
 	for i = 0, 9, 1 do
 		local addr = 0x2E5FFA + (i * 0x1)
-		bombs[i] = mainmemory.read_u32_le(addr)
+		bombs[""..i] = mainmemory.read_u8(addr)
 	end
 	return bombs
 end
@@ -181,15 +175,22 @@ local function init_visibility_state()
 		bombs = read_bomb_counts(),
 	}
 	for i = 0, 24, 1 do
-		visibility_state.tiles[i] = 0x0
+		visibility_state.tiles[""..i] = 0x0
 	end
 	
 	return visibility_state
 end
 
-local function send_game_state()
+local function send_game_state(input_state)
+	advance_frames({}, 100)
+	print("sending screenshot & game state...")
 	comm.socketServerScreenShotResponse()
-	print("screenshot.")
+    comm.socketServerSend(GAMESTATE_HEADER..serialize_table(input_state, "", ""))  -- send state to eval server
+    -- local response = str_to_table(comm.socketServerResponse())
+	local response = comm.socketServerResponse()
+	print("screenshot & state response: "..response)
+	-- advance_frames({}, 100)
+	return response
 end
 
 local function select_tile(t_idx)
@@ -234,11 +235,11 @@ local function select_coin_tiles()
 		local item = tiles[idx]
 		if item ~= 4 then
 			print(idx, item)
-			select_tile(idx)
+			select_tile(tonumber(idx))
 			visibility_state.tiles[idx] = item
 			advance_dialogue_state()
 			-- screenshot
-			send_game_state()
+			send_game_state(visibility_state)
 		else
 			print(idx, item)
 			visibility_state.tiles[idx] = item
@@ -249,7 +250,7 @@ local function select_coin_tiles()
 	advance_frames({}, 200)
 	advance_dialogue_state()
 	-- screenshot
-	send_game_state()
+	send_game_state(visibility_state)
 	while not (in_menu_dialogue()) do
 		advance_frames({["A"] = "True"}, 1)
 		advance_frames({}, 5)
