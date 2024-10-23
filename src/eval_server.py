@@ -7,6 +7,7 @@ import signal
 import socket
 import subprocess
 import numpy as np
+import pandas as pd
 import PIL
 from PIL import Image
 from matplotlib import pyplot as plt
@@ -162,18 +163,25 @@ class EvaluationServer:
         im = np.array(img)
 
         # save training image
-        path = os.path.join(self.TRAINING_PATH, f"{self.STATE_INDEX}.png")
+        path = os.path.join(self.TRAINING_PATH, f"screenshots/{self.STATE_INDEX}.png")
         self.save_img(im, path)
 
         # TODO advance state index if not in training mode
         # self.STATE_INDEX += 1
 
     def process_gamestate(self, state: bytes):
+        """
+        """
         self.logger.debug("Evaluating game state...")
         # read and sort input state
         json_state = self.flatten_dict(self.sort_dict(json.loads(state)))
         json_state['state_index'] = self.STATE_INDEX
         self.logger.debug(json_state)
+
+        # append data frame to CSV file
+        df = pd.DataFrame.from_records([json_state]).set_index('state_index')
+        path = os.path.join(self.TRAINING_PATH, f"visible_states.csv")
+        df.to_csv(path, mode='a', index=True, header=self.STATE_INDEX == 0)
 
         # increment state index
         self.STATE_INDEX += 1
