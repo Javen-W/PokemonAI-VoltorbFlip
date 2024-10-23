@@ -30,6 +30,7 @@ class EvaluationServer:
     TRAINING_PATH = './training_data/'
     STATE_INDEX = 0
     IMAGE_DIMS = (256, 384)  # width x height
+    CROP_DIMS = (5, 197, 5 + 190, 197 + 187)
 
     """
     Network packet header constants.
@@ -160,6 +161,7 @@ class EvaluationServer:
         self.logger.debug("Processing game screenshot...")
         # read image and convert to grayscale
         img = PIL.Image.open(io.BytesIO(png)).convert('L')
+        img = img.crop(self.CROP_DIMS)
         im = np.array(img)
 
         # save training image
