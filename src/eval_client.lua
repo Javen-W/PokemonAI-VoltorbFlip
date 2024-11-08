@@ -85,17 +85,6 @@ local function decrypt(seed, addr, words)
 	return D
 end
 
-local function randomize_seed()
-    if ADD_RNG and is_outside() then
-    	-- math.randomseed(os.time())
-    	-- local rng = math.random(1, 250)
-    	comm.socketServerSend("SEED")
-        local rng = comm.socketServerResponse()
-    	log("Randomizing seed: waiting "..rng.." frames...")
-        advance_frames({}, rng)
-    end
-end
-
 local function numberToBinary(x)
 	local ret = ""
 	while x~=1 and x~=0 do
@@ -113,6 +102,15 @@ local function advance_frames(instruct, cnt)
         emu.frameadvance()
         joypad.set(instruct)
     end
+end
+
+local function randomize_seed()
+	math.randomseed(os.time())
+	local rng = math.random(1, 250)
+	-- comm.socketServerSend("SEED")
+	--local rng = comm.socketServerResponse()
+	print("Randomizing seed: waiting "..rng.." frames...")
+	advance_frames({}, rng)
 end
 
 local function read_tile(idx)
@@ -286,6 +284,7 @@ function GameLoop()
     -- load save state
     log("Loading save slot "..LOAD_SLOT.."...")
     savestate.loadslot(LOAD_SLOT)
+	randomize_seed()
 
     -- loop until a round is lost or TTL runs out
     while true do
