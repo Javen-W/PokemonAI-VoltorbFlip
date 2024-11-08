@@ -107,10 +107,8 @@ end
 local function randomize_seed()
 	math.randomseed(os.time())
 	local rng = math.random(1, 250)
-	-- comm.socketServerSend("SEED")
-	--local rng = comm.socketServerResponse()
-	print("Randomizing seed: waiting "..rng.." frames...")
-	advance_frames({}, rng)
+	print("Randomizing seed: "..rng)
+	mainmemory.write_u32_le(0x10F6CC, rng)
 end
 
 local function read_tile(idx)
