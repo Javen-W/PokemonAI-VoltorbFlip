@@ -162,18 +162,19 @@ local function in_tile_selection()
 	return read_dialogue_state() == 0x0000
 end
 
-local function advance_lobby_state()
-	while (in_lobby_state()) do
-		advance_frames({["A"] = "True"}, 1)
-		advance_frames({}, 5)
-	end
-end
-
 local function advance_dialogue_state()
 	while (in_menu_dialogue() or in_game_dialogue()) do
 		advance_frames({["A"] = "True"}, 1)
 		advance_frames({}, 5)
 	end
+end
+
+local function advance_lobby_state()
+	while not (in_menu_dialogue()) do
+		advance_frames({["A"] = "True"}, 1)
+		advance_frames({}, 5)
+	end
+	advance_dialogue_state()
 end
 
 local function read_cursor_index()
@@ -300,7 +301,6 @@ function GameLoop()
     while true do
 		advance_dialogue_state()
 		select_coin_tiles()
-
         print("Advancing to next level...")
 		advance_frames({}, 200)
     end
