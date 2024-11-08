@@ -15,7 +15,7 @@ local FINISHED_STATE = "FINISHED"
 local VISIBLE_STATE_HEADER = "VISIBLE_STATE:"
 local HIDDEN_STATE_HEADER = "HIDDEN_STATE:"
 local LOG_HEADER = "LOG:"
-local LOAD_SLOT = 1  -- the emulator savestate slot to load
+local LOAD_SLOT = 2  -- the emulator savestate slot to load
 
 -- used in PRNG state calculation
 local function mult32(a, b)
@@ -154,8 +154,19 @@ local function in_menu_dialogue()
 	return read_dialogue_state() == 0xD008
 end
 
+local function in_lobby_state()
+	return mainmemory.read_u32_le(0x1D0DF0) ~= 0x7A
+end
+
 local function in_tile_selection()
 	return read_dialogue_state() == 0x0000
+end
+
+local function advance_lobby_state()
+	while (in_lobby_state()) do
+		advance_frames({["A"] = "True"}, 1)
+		advance_frames({}, 5)
+	end
 end
 
 local function advance_dialogue_state()
@@ -283,6 +294,7 @@ function GameLoop()
     log("Loading save slot "..LOAD_SLOT.."...")
     savestate.loadslot(LOAD_SLOT)
 	randomize_seed()
+	advance_lobby_state()
 
     -- loop until a round is lost or TTL runs out
     while true do

@@ -61,5 +61,6 @@ SystemID NDS
 001D0EDE	w	h	0	Main RAM	Menu state (0xFFF8)
 002C42B6	w	h	0	Main RAM	Dialouge State (Menu=0xD008; In-Game=0xD002)
 0010F6CC	d	u	0	Main RAM	RNG Seed
+001D0DF0	d	h	0	Main RAM	Lobby State (~0x7A)
 0	S	_	1		
 
