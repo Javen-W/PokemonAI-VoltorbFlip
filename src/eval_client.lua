@@ -16,6 +16,7 @@ local VISIBLE_STATE_HEADER = "VISIBLE_STATE:"
 local HIDDEN_STATE_HEADER = "HIDDEN_STATE:"
 local LOG_HEADER = "LOG:"
 local LOAD_SLOT = 2  -- the emulator savestate slot to load
+local MAX_COINS = 50000
 
 -- used in PRNG state calculation
 local function mult32(a, b)
@@ -122,6 +123,10 @@ local function read_tiles()
 		tiles_struct[""..i] = read_tile(i)
 	end
 	return tiles_struct
+end
+
+local function read_collected_coins()
+	return mainmemory.read_u16_le(0x27C31C)
 end
 
 local function read_coin_counts()
@@ -288,25 +293,27 @@ end
 -- ####         GAME LOOP          ####
 -- ####################################
 function GameLoop()
-    log("Beginning game loop...")
-    -- initialize global vars
+	while true do
+		log("Beginning game loop...")
 
-    -- load save state
-    log("Loading save slot "..LOAD_SLOT.."...")
-    savestate.loadslot(LOAD_SLOT)
-	randomize_seed()
-	advance_lobby_state()
+		-- load save state
+		log("Loading save slot "..LOAD_SLOT.."...")
+		savestate.loadslot(LOAD_SLOT)
+		randomize_seed()
+		advance_lobby_state()
 
-    -- loop until a round is lost or TTL runs out
-    while true do
-		advance_dialogue_state()
-		select_coin_tiles()
-        print("Advancing to next level...")
-		advance_frames({}, 200)
-    end
-
-    -- end game loop
-    log("Finished game loop.")
+		-- loop until a round is lost or max currency is reached
+		while read_collected_coins() < MAX_COINS do
+			advance_dialogue_state()
+			select_coin_tiles()
+			print("Advancing to next level...")
+			print("Collected coins: "..read_collected_coins())
+			advance_frames({}, 200)
+		end
+	
+		-- end game loop
+		log("Finished game loop.")
+	end
 end
 
 
