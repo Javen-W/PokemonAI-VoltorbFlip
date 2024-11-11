@@ -15,7 +15,8 @@ local FINISHED_STATE = "FINISHED"
 local VISIBLE_STATE_HEADER = "VISIBLE_STATE:"
 local HIDDEN_STATE_HEADER = "HIDDEN_STATE:"
 local LOG_HEADER = "LOG:"
-local LOAD_SLOT = 1  -- the emulator savestate slot to load
+local LOAD_SLOT = 2  -- the emulator savestate slot to load
+local MAX_COINS = 50000
 
 -- used in PRNG state calculation
 local function mult32(a, b)
@@ -85,17 +86,6 @@ local function decrypt(seed, addr, words)
 	return D
 end
 
-local function randomize_seed()
-    if ADD_RNG and is_outside() then
-    	-- math.randomseed(os.time())
-    	-- local rng = math.random(1, 250)
-    	comm.socketServerSend("SEED")
-        local rng = comm.socketServerResponse()
-    	log("Randomizing seed: waiting "..rng.." frames...")
-        advance_frames({}, rng)
-    end
-end
-
 local function numberToBinary(x)
 	local ret = ""
 	while x~=1 and x~=0 do
@@ -115,6 +105,13 @@ local function advance_frames(instruct, cnt)
     end
 end
 
+local function randomize_seed()
+	math.randomseed(os.time())
+	local rng = math.random(1, 250)
+	print("Randomizing seed: "..rng)
+	mainmemory.write_u32_le(0x10F6CC, rng)
+end
+
 local function read_tile(idx)
 	local addr = 0x2E5EC4 + (idx * 0xC)
 	return mainmemory.read_u32_le(addr)
@@ -126,6 +123,10 @@ local function read_tiles()
 		tiles_struct[""..i] = read_tile(i)
 	end
 	return tiles_struct
+end
+
+local function read_collected_coins()
+	return mainmemory.read_u16_le(0x27C31C)
 end
 
 local function read_coin_counts()
@@ -158,6 +159,10 @@ local function in_menu_dialogue()
 	return read_dialogue_state() == 0xD008
 end
 
+local function in_lobby_state()
+	return mainmemory.read_u32_le(0x1D0DF0) ~= 0x7A
+end
+
 local function in_tile_selection()
 	return read_dialogue_state() == 0x0000
 end
@@ -167,6 +172,14 @@ local function advance_dialogue_state()
 		advance_frames({["A"] = "True"}, 1)
 		advance_frames({}, 5)
 	end
+end
+
+local function advance_lobby_state()
+	while not (in_menu_dialogue()) do
+		advance_frames({["A"] = "True"}, 1)
+		advance_frames({}, 5)
+	end
+	advance_dialogue_state()
 end
 
 local function read_cursor_index()
@@ -280,24 +293,27 @@ end
 -- ####         GAME LOOP          ####
 -- ####################################
 function GameLoop()
-    log("Beginning game loop...")
-    -- initialize global vars
+	while true do
+		log("Beginning game loop...")
 
-    -- load save state
-    log("Loading save slot "..LOAD_SLOT.."...")
-    savestate.loadslot(LOAD_SLOT)
+		-- load save state
+		log("Loading save slot "..LOAD_SLOT.."...")
+		savestate.loadslot(LOAD_SLOT)
+		randomize_seed()
+		advance_lobby_state()
 
-    -- loop until a round is lost or TTL runs out
-    while true do
-		advance_dialogue_state()
-		select_coin_tiles()
+		-- loop until a round is lost or max currency is reached
+		while read_collected_coins() < MAX_COINS do
+			advance_dialogue_state()
+			select_coin_tiles()
+			print("Advancing to next level...")
+			print("Collected coins: "..read_collected_coins())
+			advance_frames({}, 200)
+		end
 
-        print("Advancing to next level...")
-		advance_frames({}, 200)
-    end
-
-    -- end game loop
-    log("Finished game loop.")
+		-- end game loop
+		log("Finished game loop.")
+	end
 end
 
 

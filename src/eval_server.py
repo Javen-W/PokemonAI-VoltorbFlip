@@ -28,7 +28,6 @@ class EvaluationServer:
     # Edge Detection Kernel
     KERNEL = np.array([[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]])
     TRAINING_PATH = './training_data/'
-    STATE_INDEX = 0
     IMAGE_DIMS = (256, 384)  # width x height
     CROP_DIMS = (5, 197, 5 + 190, 197 + 187)
 
@@ -52,6 +51,7 @@ class EvaluationServer:
         # evaluation vars
         self.client_ps = []  # emulator client process ID(s)
         self.logger = self._init_logger()  # init the logger
+        self.state_index = self.init_state_index(self.TRAINING_PATH)
 
         # evaluation mode parameters
         self.SCRIPT_PATH = './src/eval_client.lua'
@@ -175,11 +175,11 @@ class EvaluationServer:
         im = np.array(img)
 
         # save training image
-        path = os.path.join(self.TRAINING_PATH, f"screenshots/{self.STATE_INDEX}.png")
+        path = os.path.join(self.TRAINING_PATH, f"screenshots/{self.state_index}.png")
         self.save_img(im, path)
 
         # advance state index
-        self.STATE_INDEX += 1
+        self.state_index += 1
 
     def process_gamestate(self, state: bytes, csv_path: str):
         """
@@ -187,13 +187,22 @@ class EvaluationServer:
         self.logger.debug("Evaluating game state...")
         # read and sort input state
         json_state = self.flatten_dict(self.sort_dict(json.loads(state)))
-        json_state['state_index'] = self.STATE_INDEX
+        json_state['state_index'] = self.state_index
         self.logger.debug(json_state)
 
         # TODO: if in training mode
         # append data frame to CSV file
         df = pd.DataFrame.from_records([json_state]).set_index('state_index')
-        df.to_csv(csv_path, mode='a', index=True, header=self.STATE_INDEX == 0)
+        df.to_csv(csv_path, mode='a', index=True, header=self.state_index == 0)
+
+    @classmethod
+    def init_state_index(cls, training_path):
+        screenshot_path = os.path.join(training_path, "screenshots")
+        if os.path.exists(screenshot_path):
+            n_images = len(os.listdir(screenshot_path))
+            print(f"Existing training images: {n_images}")
+            return n_images
+        return 0
 
     @classmethod
     def send_response(cls, client, msg):
