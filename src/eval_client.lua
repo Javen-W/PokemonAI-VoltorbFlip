@@ -310,7 +310,7 @@ function GameLoop()
 			print("Collected coins: "..read_collected_coins())
 			advance_frames({}, 200)
 		end
-	
+
 		-- end game loop
 		log("Finished game loop.")
 	end
