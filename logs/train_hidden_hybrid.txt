@@ -1,0 +1,17 @@
+Using device: cpu
+Downloading: "https://download.pytorch.org/models/resnet18-f37072fd.pth" to C:\Users\Admin/.cache\torch\hub\checkpoints\resnet18-f37072fd.pth
+100%|██████████| 44.7M/44.7M [00:04<00:00, 11.6MB/s]
+Epoch 1/10, Loss: 0.4568
+Epoch 2/10, Loss: 0.1261
+Epoch 3/10, Loss: 0.0538
+Epoch 4/10, Loss: 0.0394
+Epoch 5/10, Loss: 0.0153
+Epoch 6/10, Loss: 0.0239
+Epoch 7/10, Loss: 0.0027
+Epoch 8/10, Loss: 0.0045
+Epoch 9/10, Loss: 0.0205
+Epoch 10/10, Loss: 0.0215
+Accuracy: 99.83%
+Model saved to ./weights/hidden_hybrid.pkl
+
+Process finished with exit code 0

@@ -6,10 +6,7 @@ from sklearn.model_selection import train_test_split
 from torchvision import models, transforms
 from PIL import Image
 import pandas as pd
-import zipfile
 import pickle
-
-import os
 
 
 # Load visible and hidden state data
@@ -17,18 +14,11 @@ visible_states = pd.read_csv('./training_data/visible_states.csv')
 hidden_states = pd.read_csv('./training_data/hidden_states.csv')
 
 visible_states.head()
-
 hidden_states.head()
 
-# Extract the ZIP file
-def extract_zip(zip_path, extract_to="extracted_screenshots"):
-    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-        zip_ref.extractall(extract_to)
-    return os.path.join(extract_to, "screenshots") #, "screenshots")
 
 # Path to the zip file containing screenshots
-zip_file_path = "./training_data/screenshots.zip"
-screenshots_dir = extract_zip(zip_file_path)  # Extract the zip file
+screenshots_dir = "./training_data/screenshots/"
 
 # Image preprocessing pipeline
 image_transform = transforms.Compose([
@@ -37,6 +27,7 @@ image_transform = transforms.Compose([
     transforms.ToTensor(),       # Convert images to tensors
     transforms.Normalize((0.5,), (0.5,))  # Normalize pixel values
 ])
+
 
 # Custom dataset to handle both tabular data and screenshots
 class VoltorbFlipDataset(Dataset):
@@ -56,13 +47,11 @@ class VoltorbFlipDataset(Dataset):
         # Target data (shift hidden states from 1–4 to 0–3)
         y = torch.tensor(self.hidden_states[idx]-1, dtype=torch.long) # Shift: 1–4 → 0–3
 
-
         # Load corresponding screenshot
         state_index = self.state_indices[idx]
         image_path = f"{self.screenshots_dir}/{state_index}.png"
         image = Image.open(image_path)
         x_image = image_transform(image)
-
         #print(f"Target Shape in Dataset: {y.shape}")
 
         return (x_tabular, x_image), y
@@ -72,25 +61,12 @@ visible_train, visible_test, hidden_train, hidden_test = train_test_split(
     visible_states, hidden_states, test_size=0.2, random_state=42
 )
 
-
 # Create datasets and data loaders
 train_dataset = VoltorbFlipDataset(visible_train, hidden_train, screenshots_dir)
 test_dataset = VoltorbFlipDataset(visible_test, hidden_test, screenshots_dir)
 
 train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
-
-# sample = train_dataset[0]  # Triggers __getitem__ for the first sample
-# (tabular_data, image_data), target = sample
-# print(f"Sample Target Shape: {target.shape}")  # Should match the expected [25]
-
-
-# for i in range(5):
-#     (tabular_data, image_data), target = train_dataset[i]
-#     print(f"Sample {i} Target Shape: {target.shape}") #
-#     print(f"Unique target values: {torch.unique(target)}")
-
-
 
 
 # Define the ResNet-18 Model with Modified Input Layer
@@ -115,6 +91,7 @@ class ModifiedResNet18(nn.Module):
     def forward(self, x):
         return self.resnet(x)
 
+
 # Define the hybrid model
 class HybridModel(nn.Module):
     def __init__(self, tabular_input_size, image_output_size, num_classes, num_tiles = 25):
@@ -134,7 +111,6 @@ class HybridModel(nn.Module):
         self.fc_combined = nn.Linear(64 + image_output_size, num_tiles * num_classes)
         self.relu = nn.ReLU()
         # self.softmax = nn.Softmax(dim=1)  ###????? missing in response
-        
 
     def forward(self, x_tabular, x_image):
         # Tabular data forward pass
@@ -161,6 +137,7 @@ class HybridModel(nn.Module):
         # print(f"Model Output Shape: {x_combined.shape}")   ############
 
         return x_combined #self.softmax(x_combined)
+
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
@@ -196,9 +173,6 @@ def train(model, train_loader, criterion, optimizer, epochs=10,num_tiles=25):
             # print(f"Model Output Shape: {outputs.shape}") #############
             # print(f"Targets Shape: {targets.shape}") #############
 
-            
-
-
             # Reshape outputs and targets for loss calculation
             batch_size, num_tiles, num_classes = outputs.shape
             # print(" num_tiles:", num_tiles)
@@ -207,14 +181,13 @@ def train(model, train_loader, criterion, optimizer, epochs=10,num_tiles=25):
             targets = targets.view(-1)  # [batch_size * num_tiles]
             # print(f"Targets Shape After Reshaping: {targets.view(-1).shape}") #############
 
-
-            
             loss = criterion(outputs, targets)
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
             
         print(f"Epoch {epoch+1}/{epochs}, Loss: {running_loss/len(train_loader):.4f}")
+
 
 # Evaluation function
 def evaluate(model, test_loader):
@@ -242,8 +215,9 @@ def evaluate(model, test_loader):
             correct += (predicted == targets).sum().item()
     print(f"Accuracy: {100 * correct / total:.2f}%")
 
+
 # Save the model (ensure it's on the CPU)
-def save_model_pickle(model, path="voltorbflip_model.pkl"):
+def save_model_pickle(model, path="./weights/hidden_hybrid.pkl"):
     model_cpu = model.to("cpu")  # Move the model to CPU
     with open(path, "wb") as f:
         pickle.dump(model_cpu, f)
@@ -256,8 +230,4 @@ if __name__ == "__main__":
     evaluate(model, test_loader)
     
     # Save the model (ensure portability to CPU)
-    save_model_pickle(model, "voltorbflip_hybrid_model.pkl")
-
-
-
-
+    save_model_pickle(model, "./weights/hidden_hybrid.pkl")
