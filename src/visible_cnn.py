@@ -171,7 +171,7 @@ def main():
         loss_fn,
         train_loader,
         test_loader,
-        model_path="./weights/v2h_cnn.pth",
+        model_path="./weights/visible_cnn.pth",
         episodes=5,
     )
     trainer.train()
