@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[4]:
-
-
 import pandas as pd
 from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader, random_split
@@ -13,6 +7,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import os
+
 
 # Define CNN model for Voltorb Flip
 class VoltorbFlipCNN(nn.Module):
@@ -49,6 +44,7 @@ class VoltorbFlipCNN(nn.Module):
         x = self.fc2(x)
         return x
 
+
 # Custom dataset for loading images with state labels
 class VoltorbFlipScreenshotDataset(Dataset):
     def __init__(self, image_folder, visible_states, transform=None):
@@ -72,9 +68,10 @@ class VoltorbFlipScreenshotDataset(Dataset):
 
         return image, label
 
+
 # Trainer class
 class Trainer:
-    def __init__(self, model, optimizer, loss_fn, train_loader, test_loader, episodes=5, model_path="voltorb_flip_cnn.pth"):
+    def __init__(self, model, optimizer, loss_fn, train_loader, test_loader, model_path, episodes=5):
         """
         Initialize the Trainer with model, optimizer, loss function, dataloaders, and number of episodes.
         """
@@ -133,13 +130,14 @@ class Trainer:
         for name, param in self.model.named_parameters():
             print(f"Layer: {name} | Weights: {param}")
 
+
 # Main function
 def main():
     # Load the CSV file for visible states
-    visible_states = pd.read_csv('visible_states.csv')  # Assuming this file contains labels for each screenshot
+    visible_states = pd.read_csv('./training_data/visible_states.csv')  # Assuming this file contains labels for each screenshot
 
     # Paths to images and transformation
-    image_folder = './screenshots/'  # Replace with the actual path to the screenshots
+    image_folder = './training_data/screenshots/'  # Replace with the actual path to the screenshots
     transform = transforms.Compose([
         transforms.Resize((32, 32)),
         transforms.ToTensor()
@@ -167,18 +165,24 @@ def main():
     loss_fn = nn.CrossEntropyLoss()
 
     # Training and Evaluation
-    trainer = Trainer(cnn_model, optimizer, loss_fn, train_loader, test_loader, episodes=5)
+    trainer = Trainer(
+        cnn_model,
+        optimizer,
+        loss_fn,
+        train_loader,
+        test_loader,
+        model_path="./weights/v2h_cnn.pth",
+        episodes=5,
+    )
     trainer.train()
     trainer.evaluate()
     trainer.save_model()
     trainer.print_weights()
 
+
 # Entry point
 if __name__ == "__main__":
     main()
-
-
-# In[ ]:
 
 
 
