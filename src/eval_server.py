@@ -82,7 +82,8 @@ class EvaluationServer:
         self.logger.debug(f"Connected by {addr}.")
 
         # evaluate client(s)
-        self.evaluate_client(client)
+        fitness = self.evaluate_client(client)
+        self.logger.info(f"Evaluation fitness: {fitness}")
 
         # send finish state to client
         self.send_response(client, self.FINISH_STATE)
@@ -120,8 +121,8 @@ class EvaluationServer:
                 break
 
         # repeat game loop
-        finished = False
-        while not finished:
+        fitness = None
+        while not fitness:
             # receive client buffered message
             data = client.recv(16000)
 
@@ -163,8 +164,14 @@ class EvaluationServer:
                     # respond to client with evaluation mode
                     self.send_response(client, self.mode)
 
+                # is message a fitness score?
+                elif msg[:self.FITNESS_HEADER[1]] == self.FITNESS_HEADER[0]:
+                    fitness = int(msg[self.FITNESS_HEADER[1]:])
+                    # respond to client with success
+                    self.send_response(client, self.SUCCESS_STATE)
+
         # finished evaluating client
-        return None
+        return fitness
 
     @classmethod
     def _parse_msgs(cls, _msg) -> [bytes]:

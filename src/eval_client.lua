@@ -14,6 +14,7 @@ local READY_STATE = "READY"
 local FINISHED_STATE = "FINISHED"
 local VISIBLE_STATE_HEADER = "VISIBLE_STATE:"
 local HIDDEN_STATE_HEADER = "HIDDEN_STATE:"
+local FITNESS_HEADER = "FITNESS:"
 local LOG_HEADER = "LOG:"
 local LOAD_SLOT = 2  -- the emulator savestate slot to load
 local MAX_COINS = 50000
@@ -223,6 +224,13 @@ local function send_game_states(visible_state, hidden_state)
 	return true
 end
 
+local function send_game_fitness()
+	local fitness = read_collected_coins()
+	log("fitness score: "..fitness)
+	comm.socketServerSend(FITNESS_HEADER..fitness)
+	comm.socketServerResponse()
+end
+
 local function select_tile(t_idx)
 	if t_idx < 0 or t_idx >= 25 then
 		return
@@ -255,8 +263,8 @@ local function select_tile(t_idx)
 	advance_frames({}, 1)
 end
 
-local function select_coin_tiles()
-	log("Starting level.")
+local function auto_level()
+	log("Starting auto level...")
 	local visible_state = init_visibility_state()
 	local hidden_state = read_hidden_state()
 	local tiles = read_tiles()
@@ -280,7 +288,7 @@ local function select_coin_tiles()
 			-- no screenshot
 		end
 	end
-	log("Level clear.")
+	log("Auto level cleared.")
 	advance_frames({}, 200)
 	advance_dialogue_state()
 	-- screenshot
@@ -290,6 +298,13 @@ local function select_coin_tiles()
 		advance_frames({}, 5)
 	end
 	advance_dialogue_state()
+end
+
+local function manual_level()
+	log("Starting manual level...")
+	local success = false
+	
+	return success
 end
 
 
@@ -307,16 +322,21 @@ function GameLoop(eval_mode)
 		advance_lobby_state()
 
 		-- loop until a round is lost or max currency is reached
-		while read_collected_coins() < MAX_COINS do
+		local success = true
+		while read_collected_coins() < MAX_COINS and success do
 			advance_dialogue_state()
-			select_coin_tiles()
-			log("Advancing to next level...")
+			if eval_mode == MODE_TRAIN then
+				auto_level()
+			else
+				success = manual_level()
+			end
 			log("Collected coins: "..read_collected_coins())
 			advance_frames({}, 200)
 		end
 
 		-- end game loop
 		log("Finished game loop.")
+		send_game_fitness()
 	end
 end
 
