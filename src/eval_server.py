@@ -38,19 +38,28 @@ class EvaluationServer:
     PNG_HEADER = (b"\x89PNG", 4)
     VISIBLE_STATE_HEADER = (b"VISIBLE_STATE:", 14)
     HIDDEN_STATE_HEADER = (b"HIDDEN_STATE:", 13)
-    READY_STATE = b"5 READY"
-    SUCCESS_STATE = b"SUCCESS"
-    SEED_STATE = (b"SEED", 4)
-    FINISH_STATE = b"8 FINISHED"
     FITNESS_HEADER = (b"FITNESS:", 8)
     LOG_HEADER = (b"LOG:", 4)
+    READY_STATE_HEADER = b"5 READY"
+
+    REQUEST_MODE_HEADER = (b"REQUEST_MODE", 12)
+    REQUEST_SEED_HEADER = (b"REQUEST_SEED", 12)
+
+    READY_STATE = b"READY"
+    SUCCESS_STATE = b"SUCCESS"
+    FINISH_STATE = b"FINISHED"
+    EVAL_MODE = b"MODE_EVAL"
+    TRAIN_MODE = b"MODE_TRAIN"
 
     def __init__(self, mode: str):
         # default socket timeout
         socket.setdefaulttimeout(300)
 
         # evaluation vars
-        self.mode = mode
+        self.mode = self.EVAL_MODE
+        if mode == "train":
+            self.mode = self.TRAIN_MODE
+
         self.client_ps = []  # emulator client process ID(s)
         self.logger = self._init_logger()  # init the logger
         self.state_index = self.init_state_index(self.TRAINING_PATH)
@@ -76,7 +85,7 @@ class EvaluationServer:
         self.evaluate_client(client)
 
         # send finish state to client
-        client.sendall(self.FINISH_STATE)
+        self.send_response(client, self.FINISH_STATE)
 
         # successful generation evaluation
         self.close_server(server)
@@ -105,9 +114,9 @@ class EvaluationServer:
             data = client.recv(1024)
             if not data:
                 raise ConnectionClosedException
-            if data == self.READY_STATE:
-                self.logger.debug("Client is ready to evaluate next genome.")
-                client.sendall(self.READY_STATE)
+            if data == self.READY_STATE_HEADER:
+                self.logger.debug("Client is ready to evaluate.")
+                self.send_response(client, self.READY_STATE)
                 break
 
         # repeat game loop
@@ -148,6 +157,11 @@ class EvaluationServer:
                     self.process_gamestate(trimmed_msg, csv_path)
                     # respond to client with success
                     self.send_response(client, self.SUCCESS_STATE)
+
+                # is message a mode request?
+                elif msg[:self.REQUEST_MODE_HEADER[1]] == self.REQUEST_MODE_HEADER[0]:
+                    # respond to client with evaluation mode
+                    self.send_response(client, self.mode)
 
         # finished evaluating client
         return None

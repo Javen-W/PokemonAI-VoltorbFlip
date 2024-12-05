@@ -17,6 +17,9 @@ local HIDDEN_STATE_HEADER = "HIDDEN_STATE:"
 local LOG_HEADER = "LOG:"
 local LOAD_SLOT = 2  -- the emulator savestate slot to load
 local MAX_COINS = 50000
+local REQUEST_MODE = "REQUEST_MODE"
+local MODE_TRAIN = "MODE_TRAIN"
+local MODE_EVAL = "MODE_EVAL"
 
 -- used in PRNG state calculation
 local function mult32(a, b)
@@ -31,7 +34,7 @@ local function mult32(a, b)
 end
 
 local function log(msg)
-    comm.socketServerSend(LOG_HEADER..tostring(msg))
+	comm.socketServerSend(LOG_HEADER..tostring(msg))
 end
 
 function table.shallow_copy(t)
@@ -43,34 +46,34 @@ function table.shallow_copy(t)
 end
 
 local function serialize_table(tabl, indent, nl)
-    nl = nl or string.char(10) -- newline
-    indent = indent and (indent.."  ") or ""
-    local str = ''
-    str = str .. indent.."{"
-    for key, value in pairs (tabl) do
-        local pr = (type(key)=="string") and ('"'..key..'":') or ""
-        if type (value) == "table" then
-            str = str..nl..pr..serialize_table(value, indent)..','
-        elseif type (value) == "string" then
-            str = str..nl..indent..pr..'"'..tostring(value)..'",'
-        else
-            str = str..nl..indent..pr..tostring(value)..','
-        end
-    end
-    str = str:sub(1, #str-1) -- remove last symbol
-    str = str..nl..indent.."}"
-    return str
+	nl = nl or string.char(10) -- newline
+	indent = indent and (indent.."  ") or ""
+	local str = ''
+	str = str .. indent.."{"
+	for key, value in pairs (tabl) do
+		local pr = (type(key)=="string") and ('"'..key..'":') or ""
+		if type (value) == "table" then
+			str = str..nl..pr..serialize_table(value, indent)..','
+		elseif type (value) == "string" then
+			str = str..nl..indent..pr..'"'..tostring(value)..'",'
+		else
+			str = str..nl..indent..pr..tostring(value)..','
+		end
+	end
+	str = str:sub(1, #str-1) -- remove last symbol
+	str = str..nl..indent.."}"
+	return str
 end
 
 local function sort_by_values(tbl, sort_function)
-    local keys = {}
-    for key in pairs(tbl) do
-        table.insert(keys, key)
-    end
-    table.sort(keys, function(a, b)
-        return sort_function(tbl[a], tbl[b]) end
-    )
-    return keys
+	local keys = {}
+	for key in pairs(tbl) do
+		table.insert(keys, key)
+	end
+	table.sort(keys, function(a, b)
+		return sort_function(tbl[a], tbl[b]) end
+	)
+	return keys
 end
 
 local function decrypt(seed, addr, words)
@@ -97,12 +100,12 @@ local function numberToBinary(x)
 end
 
 local function advance_frames(instruct, cnt)
-    cnt = cnt or 1
-    instruct = instruct or {}
-    for i=0, cnt, 1 do
-        emu.frameadvance()
-        joypad.set(instruct)
-    end
+	cnt = cnt or 1
+	instruct = instruct or {}
+	for i=0, cnt, 1 do
+		emu.frameadvance()
+		joypad.set(instruct)
+	end
 end
 
 local function randomize_seed()
@@ -211,9 +214,9 @@ local function send_game_states(visible_state, hidden_state)
 	advance_frames({}, 100) -- buffer while potential dialogue loads
 	advance_dialogue_state()
 	print("sending screenshot & game states...")
-    comm.socketServerSend(VISIBLE_STATE_HEADER..serialize_table(visible_state))
+	comm.socketServerSend(VISIBLE_STATE_HEADER..serialize_table(visible_state))
 	comm.socketServerResponse()
-    comm.socketServerSend(HIDDEN_STATE_HEADER..serialize_table(hidden_state))
+	comm.socketServerSend(HIDDEN_STATE_HEADER..serialize_table(hidden_state))
 	comm.socketServerResponse()
 	comm.socketServerScreenShotResponse()
 	return true
@@ -292,7 +295,7 @@ end
 -- ####################################
 -- ####         GAME LOOP          ####
 -- ####################################
-function GameLoop()
+function GameLoop(eval_mode)
 	while true do
 		log("Beginning game loop...")
 
@@ -324,14 +327,19 @@ print(comm.socketServerIsConnected())
 print(comm.socketServerGetInfo())
 
 while true do
-    comm.socketServerSend(READY_STATE)
-    local server_state = comm.socketServerResponse()
-    print("Server State: "..server_state)
-    if server_state == READY_STATE then
-        -- start game loop
-    	GameLoop()
-    elseif server_state == FINISHED_STATE then
-        -- Close emulator
-        client.exit()
-    end
+	-- wait for server to be ready
+	comm.socketServerSend(READY_STATE)
+	local server_state = comm.socketServerResponse()
+	print("Server State: "..server_state)
+	if server_state == READY_STATE then
+		-- request eval mode
+		comm.socketServerSend(REQUEST_MODE)
+		local eval_mode = comm.socketServerResponse()
+		log("Evaluation mode: "..eval_mode)
+		-- start game loop
+		GameLoop(eval_mode)
+	elseif server_state == FINISHED_STATE then
+		-- Close emulator
+		client.exit()
+	end
 end
