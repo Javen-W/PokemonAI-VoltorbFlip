@@ -44,11 +44,12 @@ class EvaluationServer:
     FITNESS_HEADER = (b"FITNESS:", 8)
     LOG_HEADER = (b"LOG:", 4)
 
-    def __init__(self):
+    def __init__(self, mode: str):
         # default socket timeout
         socket.setdefaulttimeout(300)
 
         # evaluation vars
+        self.mode = mode
         self.client_ps = []  # emulator client process ID(s)
         self.logger = self._init_logger()  # init the logger
         self.state_index = self.init_state_index(self.TRAINING_PATH)
