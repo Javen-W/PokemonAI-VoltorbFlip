@@ -186,7 +186,8 @@ class EvaluationServer:
 
     def process_screenshot(self, png: bytes):
         """
-        TODO
+        Converts a Bytes format PNG image into a numpy matrix and does basic preprocessing.
+        If in training mode, the processed image will also be saved to disk.
         """
         self.logger.debug("Processing game screenshot...")
         # read image and convert to grayscale
@@ -195,14 +196,20 @@ class EvaluationServer:
         im = np.array(img)
 
         # save training image
-        path = os.path.join(self.TRAINING_PATH, f"screenshots/{self.state_index}.png")
-        self.save_img(im, path)
+        if self.mode == self.TRAIN_MODE:
+            path = os.path.join(self.TRAINING_PATH, f"screenshots/{self.state_index}.png")
+            self.save_img(im, path)
 
         # advance state index
         self.state_index += 1
 
+        # return image
+        return im
+
     def process_gamestate(self, state: bytes, csv_path: str):
         """
+        Converts a Bytes format gamestate struct to dataframe form.
+        If in training mode, the gamestate dataframe will also be appended to disk.
         """
         self.logger.debug("Evaluating game state...")
         # read and sort input state
@@ -210,10 +217,13 @@ class EvaluationServer:
         json_state['state_index'] = self.state_index
         self.logger.debug(json_state)
 
-        # TODO: if in training mode
         # append data frame to CSV file
         df = pd.DataFrame.from_records([json_state]).set_index('state_index')
-        df.to_csv(csv_path, mode='a', index=True, header=self.state_index == 0)
+        if self.mode == self.TRAIN_MODE:
+            df.to_csv(csv_path, mode='a', index=True, header=self.state_index == 0)
+
+        # return gamestate dataframe
+        return df
 
     @classmethod
     def init_state_index(cls, training_path):
