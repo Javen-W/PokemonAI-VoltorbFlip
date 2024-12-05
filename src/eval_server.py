@@ -21,6 +21,7 @@ class EvaluationServer:
     PORT = 0  # Port to listen on (non-privileged ports are > 1023)
     EMU_PATH = './emu/BizHawk-2.9.1/'
     N_CLIENTS = 1  # number of concurrent clients to evaluate genomes
+    SCRIPT_PATH = './src/eval_client.lua'
 
     """
     Image processing constants.
@@ -53,9 +54,6 @@ class EvaluationServer:
         self.client_ps = []  # emulator client process ID(s)
         self.logger = self._init_logger()  # init the logger
         self.state_index = self.init_state_index(self.TRAINING_PATH)
-
-        # evaluation mode parameters
-        self.SCRIPT_PATH = './src/eval_client.lua'
 
         # emulator path
         if platform.system() == 'Windows':
