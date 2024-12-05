@@ -34,6 +34,7 @@ local function mult32(a, b)
 end
 
 local function log(msg)
+	print(msg)
 	comm.socketServerSend(LOG_HEADER..tostring(msg))
 end
 
@@ -111,7 +112,7 @@ end
 local function randomize_seed()
 	math.randomseed(os.time())
 	local rng = math.random(1, 250)
-	print("Randomizing seed: "..rng)
+	log("Randomizing seed: "..rng)
 	mainmemory.write_u32_le(0x10F6CC, rng)
 end
 
@@ -213,7 +214,7 @@ end
 local function send_game_states(visible_state, hidden_state)
 	advance_frames({}, 100) -- buffer while potential dialogue loads
 	advance_dialogue_state()
-	print("sending screenshot & game states...")
+	log("sending screenshot & game states...")
 	comm.socketServerSend(VISIBLE_STATE_HEADER..serialize_table(visible_state))
 	comm.socketServerResponse()
 	comm.socketServerSend(HIDDEN_STATE_HEADER..serialize_table(hidden_state))
@@ -255,7 +256,7 @@ local function select_tile(t_idx)
 end
 
 local function select_coin_tiles()
-	print("Starting level.")
+	log("Starting level.")
 	local visible_state = init_visibility_state()
 	local hidden_state = read_hidden_state()
 	local tiles = read_tiles()
@@ -267,19 +268,19 @@ local function select_coin_tiles()
 	for _, idx in pairs(sorted_tiles) do
 		local item = tiles[idx]
 		if item ~= 4 then
-			print(idx, item)
+			log(idx, item)
 			select_tile(tonumber(idx))
 			visible_state.tiles[idx] = item
 			advance_dialogue_state()
 			-- screenshot
 			send_game_states(visible_state, hidden_state)
 		else
-			print(idx, item)
+			log(idx, item)
 			visible_state.tiles[idx] = item
 			-- no screenshot
 		end
 	end
-	print("Level clear.")
+	log("Level clear.")
 	advance_frames({}, 200)
 	advance_dialogue_state()
 	-- screenshot
@@ -309,8 +310,8 @@ function GameLoop(eval_mode)
 		while read_collected_coins() < MAX_COINS do
 			advance_dialogue_state()
 			select_coin_tiles()
-			print("Advancing to next level...")
-			print("Collected coins: "..read_collected_coins())
+			log("Advancing to next level...")
+			log("Collected coins: "..read_collected_coins())
 			advance_frames({}, 200)
 		end
 
