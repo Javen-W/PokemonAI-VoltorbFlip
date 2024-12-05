@@ -14,8 +14,8 @@ from sklearn.model_selection import train_test_split
 """
 LSTM model generator.
 """
-EMBEDDING_DIM = 128
-N_HIDDEN = 100
+EMBEDDING_DIM = 256
+N_HIDDEN = 128
 OPTIMIZER = 'adam'
 N_CLASSES = 25
 VISIBLE_DIM = 45
@@ -68,23 +68,28 @@ def main():
     # create new model
     model = get_model()
 
+    # norm_layer = keras.layers.Normalization(axis=1)
+    # norm_layer.adapt(X)
+
     # create data splits
     X_train, X_test, y_train, y_test = train_test_split(
         X, y,
-        test_size=0.15,
+        test_size=0.10,
         random_state=777,
     )
 
     # train the model
     model.fit(
+        # norm_layer(X_train),
         X_train,
         y_train,
         epochs=100,
-        batch_size=64
+        batch_size=128
     )
 
     # final evaluation of the model
     scores = model.evaluate(
+        # norm_layer(X_test),
         X_test,
         y_test,
         verbose=0
