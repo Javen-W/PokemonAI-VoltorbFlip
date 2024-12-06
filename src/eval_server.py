@@ -139,9 +139,14 @@ class EvaluationServer:
 
                 # is message a state screenshot?
                 elif msg[:self.PNG_HEADER[1]] == self.PNG_HEADER[0]:
-                    self.process_screenshot(msg)
+                    im = self.process_screenshot(msg)
                     # respond to client with success
-                    self.send_response(client, self.SUCCESS_STATE)
+                    if self.mode == self.TRAIN_MODE:
+                        self.send_response(client, self.SUCCESS_STATE)
+                    # make decision
+                    if self.mode == self.EVAL_MODE:
+                        decision = self.process_decision(im)
+                        self.send_response(client, decision)
 
                 # is message a visible state struct?
                 elif msg[:self.VISIBLE_STATE_HEADER[1]] == self.VISIBLE_STATE_HEADER[0]:
@@ -183,6 +188,12 @@ class EvaluationServer:
         split = _msg.split(b" ", 1)
         size = int(split[0])
         return [split[1][:size]] + cls._parse_msgs(split[1][size:])
+
+    def process_decision(self, im: np.array):
+        """
+
+        """
+        return 24
 
     def process_screenshot(self, png: bytes):
         """
