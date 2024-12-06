@@ -189,13 +189,14 @@ class EvaluationServer:
         size = int(split[0])
         return [split[1][:size]] + cls._parse_msgs(split[1][size:])
 
-    def process_decision(self, im: np.array):
+    def process_decision(self, im: np.array) -> str:
         """
 
         """
-        return 24
+        decision = 24
+        return str(decision)
 
-    def process_screenshot(self, png: bytes):
+    def process_screenshot(self, png: bytes) -> np.array:
         """
         Converts a Bytes format PNG image into a numpy matrix and does basic preprocessing.
         If in training mode, the processed image will also be saved to disk.
@@ -217,7 +218,7 @@ class EvaluationServer:
         # return image
         return im
 
-    def process_gamestate(self, state: bytes, csv_path: str):
+    def process_gamestate(self, state: bytes, csv_path: str) -> pd.DataFrame:
         """
         Converts a Bytes format gamestate struct to dataframe form.
         If in training mode, the gamestate dataframe will also be appended to disk.
