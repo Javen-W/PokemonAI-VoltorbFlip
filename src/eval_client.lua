@@ -231,6 +231,19 @@ local function send_game_fitness()
 	comm.socketServerResponse()
 end
 
+local function count_remaining_tiles(visible_state, hidden_state)
+	local count = 0
+	for i = 0, 24, 1 do
+		local tile_visual = visible_state.tiles[""..i]
+		local tile_hidden = hidden_state.tiles[""..i]
+		-- count hidden 2/3 coin tiles
+		if tile_visual == 0x0 and (tile_hidden == 0x2 or tile_hidden == 0x3) then
+			count = count + 1
+		end
+	end
+	return count
+end
+
 local function select_tile(t_idx)
 	if t_idx < 0 or t_idx >= 25 then
 		return
