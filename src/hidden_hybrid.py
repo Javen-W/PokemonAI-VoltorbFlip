@@ -13,20 +13,8 @@ import pickle
 visible_states = pd.read_csv('./training_data/visible_states.csv')
 hidden_states = pd.read_csv('./training_data/hidden_states.csv')
 
-visible_states.head()
-hidden_states.head()
-
-
 # Path to the zip file containing screenshots
 screenshots_dir = "./training_data/screenshots/"
-
-# Image preprocessing pipeline
-image_transform = transforms.Compose([
-    transforms.Grayscale(),
-    transforms.Resize((64, 64)),  # Resize images to a fixed size
-    transforms.ToTensor(),       # Convert images to tensors
-    transforms.Normalize((0.5,), (0.5,))  # Normalize pixel values
-])
 
 
 # Custom dataset to handle both tabular data and screenshots
@@ -51,7 +39,7 @@ class VoltorbFlipDataset(Dataset):
         state_index = self.state_indices[idx]
         image_path = f"{self.screenshots_dir}/{state_index}.png"
         image = Image.open(image_path)
-        x_image = image_transform(image)
+        x_image = HybridModel.TRANSFORM(image)
         #print(f"Target Shape in Dataset: {y.shape}")
 
         return (x_tabular, x_image), y
@@ -95,6 +83,13 @@ class ModifiedResNet18(nn.Module):
 # Define the hybrid model
 class HybridModel(nn.Module):
     MODEL_PATH = "./weights/hidden_hybrid.pkl"
+    # Image preprocessing pipeline
+    TRANSFORM = transforms.Compose([
+        transforms.Grayscale(),
+        transforms.Resize((64, 64)),  # Resize images to a fixed size
+        transforms.ToTensor(),  # Convert images to tensors
+        transforms.Normalize((0.5,), (0.5,))  # Normalize pixel values
+    ])
 
     def __init__(self, tabular_input_size, image_output_size, num_classes, num_tiles=25):
         super(HybridModel, self).__init__()
@@ -141,6 +136,25 @@ class HybridModel(nn.Module):
 
     def load_weights(self):
         self.load_state_dict(torch.load(self.MODEL_PATH, weights_only=True))
+
+    def predict(self, input_visible: pd.Dataframe, input_image: Image):
+        self.eval()
+        with torch.no_grad():
+            # preprocess & transform input data
+            input_visible, input_image = (
+                torch.tensor(input_visible.drop(columns=["state_index"]).values, dtype=torch.float32).to(device),
+                HybridModel.TRANSFORM(input_image).to(device),
+            )
+
+            # forward pass
+            outputs = self.forward(input_visible, input_image)
+            _, predicted = torch.max(outputs, 2)
+
+            # map predictions back to 1-4
+            predicted = predicted + 1
+
+            # return predictions
+            return predicted
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

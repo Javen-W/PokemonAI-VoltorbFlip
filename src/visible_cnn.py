@@ -12,6 +12,10 @@ import os
 # Define CNN model for Voltorb Flip
 class VoltorbFlipCNN(nn.Module):
     MODEL_PATH = "./weights/visible_cnn.pth"
+    TRANSFORM = transforms.Compose([
+        transforms.Resize((32, 32)),
+        transforms.ToTensor()
+    ])
 
     def __init__(self):
         super(VoltorbFlipCNN, self).__init__()
@@ -48,6 +52,19 @@ class VoltorbFlipCNN(nn.Module):
 
     def load_weights(self):
         self.load_state_dict(torch.load(self.MODEL_PATH, weights_only=True))
+
+    def predict(self, input_image: Image):
+        self.eval()
+        with torch.no_grad():
+            # preprocess and transform input data
+            input_image = self.TRANSFORM(input_image.convert('RGB'))
+
+            # forward pass
+            output = self.forward(input_image)
+            _, predicted = torch.max(output, 1)
+
+            # return predictions
+            return predicted
 
 
 # Custom dataset for loading images with state labels
@@ -142,11 +159,8 @@ def main():
     visible_states = pd.read_csv('./training_data/visible_states.csv')  # Assuming this file contains labels for each screenshot
 
     # Paths to images and transformation
+    transform = VoltorbFlipCNN.TRANSFORM
     image_folder = './training_data/screenshots/'  # Replace with the actual path to the screenshots
-    transform = transforms.Compose([
-        transforms.Resize((32, 32)),
-        transforms.ToTensor()
-    ])
 
     # Load dataset
     screenshot_dataset = VoltorbFlipScreenshotDataset(

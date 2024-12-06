@@ -207,6 +207,7 @@ class EvaluationServer:
         """
 
         """
+        image = Image.fromarray(im)
         decision = 24
         return str(decision)
 
