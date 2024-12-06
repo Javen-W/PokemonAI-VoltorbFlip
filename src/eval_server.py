@@ -11,6 +11,8 @@ import pandas as pd
 import PIL
 from PIL import Image
 from matplotlib import pyplot as plt
+from visible_cnn import VoltorbFlipCNN
+from hidden_hybrid import HybridModel
 
 
 class EvaluationServer:
@@ -66,7 +68,7 @@ class EvaluationServer:
 
         # load pretrained models
         self.visible_model, self.hidden_model = None, None
-        if mode == self.EVAL_MODE:
+        if self.mode == self.EVAL_MODE:
             self.load_models()
 
         # emulator path
@@ -120,7 +122,11 @@ class EvaluationServer:
         self.visible_model.load_weights()
 
         # hidden model (predicts hidden features)
-        self.hidden_model = HybridModel()
+        self.hidden_model = HybridModel(
+            tabular_input_size=45,
+            image_output_size=64,
+            num_classes=4,
+        )
         self.hidden_model.load_weights()
 
     def evaluate_client(self, client):
@@ -203,11 +209,16 @@ class EvaluationServer:
         size = int(split[0])
         return [split[1][:size]] + cls._parse_msgs(split[1][size:])
 
-    def process_decision(self, im: np.array) -> str:
+    def process_decision(self, image: np.array) -> str:
         """
 
         """
-        image = Image.fromarray(im)
+        image = Image.fromarray(image)
+        visible_hat = self.visible_model.predict(image)
+        print(visible_hat)
+        hidden_hat = self.hidden_model.predict(visible_hat, image)
+        print(hidden_hat)
+
         decision = 24
         return str(decision)
 

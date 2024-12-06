@@ -82,7 +82,7 @@ class ModifiedResNet18(nn.Module):
 
 # Define the hybrid model
 class HybridModel(nn.Module):
-    MODEL_PATH = "./weights/hidden_hybrid.pkl"
+    MODEL_PATH = "./weights/hidden_hybrid.pth"
     # Image preprocessing pipeline
     TRANSFORM = transforms.Compose([
         transforms.Grayscale(),
@@ -137,7 +137,7 @@ class HybridModel(nn.Module):
     def load_weights(self):
         self.load_state_dict(torch.load(self.MODEL_PATH, weights_only=True))
 
-    def predict(self, input_visible: pd.Dataframe, input_image: Image):
+    def predict(self, input_visible: pd.DataFrame, input_image: Image):
         self.eval()
         with torch.no_grad():
             # preprocess & transform input data
@@ -242,10 +242,19 @@ def save_model_pickle(model, path):
     print(f"Model saved to {path}")
 
 
+def save_model(_model):
+    """
+    Save the model's weights to a file.
+    """
+    torch.save(_model.state_dict(), HybridModel.MODEL_PATH)
+    print(f"Model weights saved to {HybridModel.MODEL_PATH}")
+
+
 if __name__ == "__main__":
     # Train and evaluate the model
     train(model, train_loader, criterion, optimizer, epochs=10)
     evaluate(model, test_loader)
     
     # Save the model (ensure portability to CPU)
-    save_model_pickle(model, HybridModel.MODEL_PATH)
+    # save_model_pickle(model, HybridModel.MODEL_PATH)
+    save_model(model)
