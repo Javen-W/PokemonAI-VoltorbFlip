@@ -94,7 +94,9 @@ class ModifiedResNet18(nn.Module):
 
 # Define the hybrid model
 class HybridModel(nn.Module):
-    def __init__(self, tabular_input_size, image_output_size, num_classes, num_tiles = 25):
+    MODEL_PATH = "./weights/hidden_hybrid.pkl"
+
+    def __init__(self, tabular_input_size, image_output_size, num_classes, num_tiles=25):
         super(HybridModel, self).__init__()
         # Tabular data branch
         self.fc1 = nn.Linear(tabular_input_size, 128)
@@ -129,7 +131,6 @@ class HybridModel(nn.Module):
         # print(f"x_tabular shape: {x_tabular.shape}")
         # print(f"x_image shape: {x_image.shape}")
         # print(f"x_combined shape before reshaping: {x_combined.shape}")
-
         
         # Reshape to output predictions for each tile
         batch_size = x_tabular.size(0)
@@ -137,6 +138,9 @@ class HybridModel(nn.Module):
         # print(f"Model Output Shape: {x_combined.shape}")   ############
 
         return x_combined #self.softmax(x_combined)
+
+    def load_weights(self):
+        self.load_state_dict(torch.load(self.MODEL_PATH, weights_only=True))
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -217,7 +221,7 @@ def evaluate(model, test_loader):
 
 
 # Save the model (ensure it's on the CPU)
-def save_model_pickle(model, path="./weights/hidden_hybrid.pkl"):
+def save_model_pickle(model, path):
     model_cpu = model.to("cpu")  # Move the model to CPU
     with open(path, "wb") as f:
         pickle.dump(model_cpu, f)
@@ -230,4 +234,4 @@ if __name__ == "__main__":
     evaluate(model, test_loader)
     
     # Save the model (ensure portability to CPU)
-    save_model_pickle(model, "./weights/hidden_hybrid.pkl")
+    save_model_pickle(model, HybridModel.MODEL_PATH)

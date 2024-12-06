@@ -11,6 +11,8 @@ import os
 
 # Define CNN model for Voltorb Flip
 class VoltorbFlipCNN(nn.Module):
+    MODEL_PATH = "./weights/visible_cnn.pth"
+
     def __init__(self):
         super(VoltorbFlipCNN, self).__init__()
         self.conv1 = nn.Conv2d(3, 32, kernel_size=3, stride=1, padding=1)
@@ -43,6 +45,9 @@ class VoltorbFlipCNN(nn.Module):
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         return x
+
+    def load_weights(self):
+        self.load_state_dict(torch.load(self.MODEL_PATH, weights_only=True))
 
 
 # Custom dataset for loading images with state labels
@@ -171,7 +176,7 @@ def main():
         loss_fn,
         train_loader,
         test_loader,
-        model_path="./weights/visible_cnn.pth",
+        model_path=VoltorbFlipCNN.MODEL_PATH,
         episodes=5,
     )
     trainer.train()

@@ -64,6 +64,11 @@ class EvaluationServer:
         self.logger = self._init_logger()  # init the logger
         self.state_index = self.init_state_index(self.TRAINING_PATH)
 
+        # load pretrained models
+        self.visible_model, self.hidden_model = None, None
+        if mode == self.EVAL_MODE:
+            self.load_models()
+
         # emulator path
         if platform.system() == 'Windows':
             self.EMU_PATH = os.path.join(self.EMU_PATH, 'EmuHawk.exe')
@@ -108,6 +113,15 @@ class EvaluationServer:
 
         # return server object
         return server
+
+    def load_models(self) -> None:
+        # visible model (predicts visual features)
+        self.visible_model = VoltorbFlipCNN()
+        self.visible_model.load_weights()
+
+        # hidden model (predicts hidden features)
+        self.hidden_model = HybridModel()
+        self.hidden_model.load_weights()
 
     def evaluate_client(self, client):
         # wait for client to be ready
