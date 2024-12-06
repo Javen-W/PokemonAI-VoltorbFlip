@@ -9,7 +9,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("mode", choices=["train", "eval"])
     args = parser.parse_args()
-    print(args.mode)
+    print(f"Evaluation mode: {args.mode}")
 
     # init evaluation server & run
     eval_server = EvaluationServer(mode=args.mode)

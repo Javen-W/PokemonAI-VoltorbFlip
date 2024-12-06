@@ -45,11 +45,11 @@ class EvaluationServer:
     REQUEST_MODE_HEADER = (b"REQUEST_MODE", 12)
     REQUEST_SEED_HEADER = (b"REQUEST_SEED", 12)
 
-    READY_STATE = b"READY"
-    SUCCESS_STATE = b"SUCCESS"
-    FINISH_STATE = b"FINISHED"
-    EVAL_MODE = b"MODE_EVAL"
-    TRAIN_MODE = b"MODE_TRAIN"
+    READY_STATE = "READY"
+    SUCCESS_STATE = "SUCCESS"
+    FINISH_STATE = "FINISHED"
+    EVAL_MODE = "MODE_EVAL"
+    TRAIN_MODE = "MODE_TRAIN"
 
     def __init__(self, mode: str):
         # default socket timeout
@@ -290,7 +290,7 @@ class EvaluationServer:
         # create and add handlers
         stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(log_format)
-        stream_handler.setLevel(logging.INFO)
+        stream_handler.setLevel(logging.DEBUG)
         logger.addHandler(stream_handler)
 
         info_handler = logging.FileHandler(f"./logs/eval_server.log")

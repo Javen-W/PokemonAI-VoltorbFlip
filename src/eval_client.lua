@@ -379,7 +379,7 @@ while true do
 	-- wait for server to be ready
 	comm.socketServerSend(READY_STATE)
 	local server_state = comm.socketServerResponse()
-	print("Server State: "..server_state)
+	log("Server State: "..server_state)
 	if server_state == READY_STATE then
 		-- request eval mode
 		comm.socketServerSend(REQUEST_MODE)
