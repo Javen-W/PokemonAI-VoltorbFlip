@@ -214,6 +214,7 @@ class EvaluationServer:
 
         """
         image = Image.fromarray(image)
+
         visible_hat = self.visible_model.predict(image)
         print(visible_hat)
         hidden_hat = self.hidden_model.predict(visible_hat, image)

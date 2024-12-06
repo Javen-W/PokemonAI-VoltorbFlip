@@ -57,7 +57,7 @@ class VoltorbFlipCNN(nn.Module):
         self.eval()
         with torch.no_grad():
             # preprocess and transform input data
-            input_image = self.TRANSFORM(input_image.convert('RGB'))
+            input_image = torch.unsqueeze(self.TRANSFORM(input_image.convert('RGB')), 0)
 
             # forward pass
             output = self.forward(input_image)
