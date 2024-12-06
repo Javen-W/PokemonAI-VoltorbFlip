@@ -315,8 +315,23 @@ end
 
 local function manual_level()
 	log("Starting manual level...")
-	local success = false
-	
+	local visible_state = init_visibility_state()
+	local hidden_state = read_hidden_state()
+
+	local success = true
+	local remaining_count = count_remaining_tiles(visible_state, hidden_state)
+	while success and remaining_count > 0 do
+		log("Remaining tile count: "..remaining_count)
+		local decision = comm.socketServerScreenShotResponse()
+		local truth_value = hidden_state.tiles[decision]
+		log("Selecting tile ["..decision.."]: actual value = "..truth_value)
+		select_tile(tonumber(decision))
+		visible_state.tiles[decision] = truth_value
+		advance_dialogue_state()
+		success = truth_value ~= 0x4
+		remaining_count = count_remaining_tiles(visible_state, hidden_state)
+	end
+	log("Manual level success: "..success)
 	return success
 end
 
