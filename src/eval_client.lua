@@ -246,7 +246,7 @@ local function send_game_fitness()
 	local fitness = read_collected_coins()
 	log("fitness score: "..fitness)
 	comm.socketServerSend(FITNESS_HEADER..fitness)
-	-- comm.socketServerResponse()
+	comm.socketServerResponse()
 end
 
 local function count_remaining_tiles(visible_state, hidden_state)
