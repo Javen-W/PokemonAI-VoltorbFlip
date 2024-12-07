@@ -131,7 +131,7 @@ class Trainer:
                 output = self.model(screenshots)
                 _, decoded_output = torch.max(output.view(-1, 13), 1)
                 _, decoded_labels = torch.max(labels.view(-1, 13), 1)
-                total += labels.shape.numel()
+                total += decoded_labels.shape.numel()
                 correct += (decoded_output == decoded_labels).sum().item()
         accuracy = correct / total * 100
         print(f"Test Accuracy: {accuracy:.2f}%")
@@ -195,7 +195,7 @@ def main():
     trainer.train()
     trainer.evaluate()
     trainer.save_model()
-    # trainer.print_weights()
+    trainer.print_weights()
 
 
 # Entry point

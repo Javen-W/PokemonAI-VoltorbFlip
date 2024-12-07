@@ -860,3 +860,56 @@ tensor([-3.6259, -3.6044, -0.4863, -0.7218, -3.5987, -0.5502, -0.8133, -1.1817,
         -0.0467], requires_grad=True)
 
 Process finished with exit code 0
+
+Episode 1/50, Loss: 116.8674
+Episode 2/50, Loss: 59.0312
+Episode 3/50, Loss: 39.9956
+Episode 4/50, Loss: 29.3408
+Episode 5/50, Loss: 23.6032
+Episode 6/50, Loss: 20.1359
+Episode 7/50, Loss: 17.3200
+Episode 8/50, Loss: 15.1801
+Episode 9/50, Loss: 13.3578
+Episode 10/50, Loss: 11.8491
+Episode 11/50, Loss: 10.5417
+Episode 12/50, Loss: 9.4694
+Episode 13/50, Loss: 8.4254
+Episode 14/50, Loss: 7.7782
+Episode 15/50, Loss: 7.0977
+Episode 16/50, Loss: 6.4449
+Episode 17/50, Loss: 5.8409
+Episode 18/50, Loss: 5.3829
+Episode 19/50, Loss: 4.9603
+Episode 20/50, Loss: 4.5593
+Episode 21/50, Loss: 4.2811
+Episode 22/50, Loss: 3.9420
+Episode 23/50, Loss: 3.8744
+Episode 24/50, Loss: 3.4436
+Episode 25/50, Loss: 3.3981
+Episode 26/50, Loss: 3.1113
+Episode 27/50, Loss: 3.0146
+Episode 28/50, Loss: 2.9592
+Episode 29/50, Loss: 2.7210
+Episode 30/50, Loss: 2.7389
+Episode 31/50, Loss: 2.5236
+Episode 32/50, Loss: 2.4369
+Episode 33/50, Loss: 2.3651
+Episode 34/50, Loss: 2.2913
+Episode 35/50, Loss: 2.1669
+Episode 36/50, Loss: 2.1076
+Episode 37/50, Loss: 2.0869
+Episode 38/50, Loss: 2.0814
+Episode 39/50, Loss: 1.9245
+Episode 40/50, Loss: 1.9102
+Episode 41/50, Loss: 1.9426
+Episode 42/50, Loss: 1.8371
+Episode 43/50, Loss: 1.8204
+Episode 44/50, Loss: 1.7698
+Episode 45/50, Loss: 1.7705
+Episode 46/50, Loss: 1.7178
+Episode 47/50, Loss: 1.6928
+Episode 48/50, Loss: 1.6430
+Episode 49/50, Loss: 1.6540
+Episode 50/50, Loss: 1.6447
+
+Test Accuracy: 99.57%
