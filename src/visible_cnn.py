@@ -26,7 +26,7 @@ class VoltorbFlipCNN(nn.Module):
         # Determine the correct input size for self.fc1 by passing a dummy input
         self.flattened_size = self._get_flattened_size()
         self.fc1 = nn.Linear(self.flattened_size, 256)
-        self.fc2 = nn.Linear(256, 25)  # 5x5 grid predictions
+        self.fc2 = nn.Linear(256, 585)
 
     def _get_flattened_size(self):
         # Pass a dummy input of the expected size through the conv layers
@@ -48,6 +48,7 @@ class VoltorbFlipCNN(nn.Module):
         x = x.view(x.size(0), -1)  # Flatten for the fully connected layer
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
+        x = F.sigmoid(x)
         return x
 
     def load_weights(self):
@@ -80,15 +81,12 @@ class VoltorbFlipScreenshotDataset(Dataset):
     def __getitem__(self, idx):
         img_path = os.path.join(self.image_folder, f"{idx}.png")
         image = Image.open(img_path).convert('RGB')
-        
-        # Ensure `label` is within [0, 24]
-        raw_label = int(self.visible_states.iloc[idx].values[0])  # Get the raw label
-        label = min(max(raw_label, 0), 24)  # Clip to range [0, 24]
+        labels = self.visible_states.iloc[idx].values[1:]
+        encoded_labels = F.one_hot(torch.tensor(labels), num_classes=13).flatten()
 
         if self.transform:
             image = self.transform(image)
-
-        return image, label
+        return image, encoded_labels
 
 
 # Trainer class
@@ -114,7 +112,7 @@ class Trainer:
             total_loss = 0.0
             for screenshots, labels in self.train_loader:
                 output = self.model(screenshots)
-                loss = self.loss_fn(output, labels)
+                loss = self.loss_fn(output, labels.float())
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
@@ -131,9 +129,10 @@ class Trainer:
         with torch.no_grad():
             for screenshots, labels in self.test_loader:
                 output = self.model(screenshots)
-                _, predicted = torch.max(output, 1)
-                total += labels.size(0)
-                correct += (predicted == labels).sum().item()
+                _, decoded_output = torch.max(output.view(-1, 13), 1)
+                _, decoded_labels = torch.max(labels.view(-1, 13), 1)
+                total += labels.shape.numel()
+                correct += (decoded_output == decoded_labels).sum().item()
         accuracy = correct / total * 100
         print(f"Test Accuracy: {accuracy:.2f}%")
         return accuracy
@@ -175,13 +174,13 @@ def main():
     train_dataset, test_dataset = random_split(screenshot_dataset, [train_size, test_size])
 
     # Create DataLoaders for training and testing
-    train_loader = DataLoader(train_dataset, batch_size=2, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=2, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
 
     # Initialization
     cnn_model = VoltorbFlipCNN()
     optimizer = optim.Adam(cnn_model.parameters(), lr=0.001)
-    loss_fn = nn.CrossEntropyLoss()
+    loss_fn = nn.BCELoss()
 
     # Training and Evaluation
     trainer = Trainer(
@@ -191,12 +190,12 @@ def main():
         train_loader,
         test_loader,
         model_path=VoltorbFlipCNN.MODEL_PATH,
-        episodes=5,
+        episodes=50,
     )
     trainer.train()
     trainer.evaluate()
     trainer.save_model()
-    trainer.print_weights()
+    # trainer.print_weights()
 
 
 # Entry point
