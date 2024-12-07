@@ -168,12 +168,16 @@ class EvaluationServer:
                     if self.mode == self.EVAL_MODE:
                         decision = self.process_decision(im)
                         self.send_response(client, decision)
+                    # advance state index
+                    self.state_index += 1
 
                 # is message a visible state struct?
                 elif msg[:self.VISIBLE_STATE_HEADER[1]] == self.VISIBLE_STATE_HEADER[0]:
                     trimmed_msg = msg[self.VISIBLE_STATE_HEADER[1]:]
                     csv_path = os.path.join(self.TRAINING_PATH, f"visible_states.csv")
-                    self.process_gamestate(trimmed_msg, csv_path)
+                    visible_state = self.process_gamestate(trimmed_msg, csv_path)
+                    self.logger.debug(f"state({self.state_index}) visible_true={visible_state[0]}")
+
                     # respond to client with success
                     self.send_response(client, self.SUCCESS_STATE)
 
@@ -181,7 +185,9 @@ class EvaluationServer:
                 elif msg[:self.HIDDEN_STATE_HEADER[1]] == self.HIDDEN_STATE_HEADER[0]:
                     trimmed_msg = msg[self.HIDDEN_STATE_HEADER[1]:]
                     csv_path = os.path.join(self.TRAINING_PATH, f"hidden_states.csv")
-                    self.process_gamestate(trimmed_msg, csv_path)
+                    hidden_state = self.process_gamestate(trimmed_msg, csv_path)
+                    self.logger.debug(f"state({self.state_index}) hidden_true={hidden_state[0, -25:]}")
+
                     # respond to client with success
                     self.send_response(client, self.SUCCESS_STATE)
 
@@ -217,9 +223,9 @@ class EvaluationServer:
         image = Image.fromarray(image)
         # predict visible and hidden state features
         visible_hat = self.visible_model.predict(image)
-        self.logger.debug(f"state({self.state_index}) visible_hat={visible_hat}")
+        self.logger.debug(f"state({self.state_index}) visible_hat={visible_hat.numpy()}")
         scores, hidden_hat = self.hidden_model.predict(visible_hat, image)
-        self.logger.debug(f"state({self.state_index}) hidden_hat={hidden_hat}")
+        self.logger.debug(f"state({self.state_index}) hidden_hat={hidden_hat.numpy()}")
 
         # sort decision scores by tile index
         tile_weights = np.zeros(25)
@@ -254,22 +260,19 @@ class EvaluationServer:
             path = f"./logs/screenshots/debug_{self.state_index}.png"
             self.save_img(im, path)
 
-        # advance state index
-        self.state_index += 1
-
         # return image
         return im
 
-    def process_gamestate(self, state: bytes, csv_path: str) -> pd.DataFrame:
+    def process_gamestate(self, state: bytes, csv_path: str) -> np.array:
         """
         Converts a Bytes format gamestate struct to dataframe form.
         If in training mode, the gamestate dataframe will also be appended to disk.
         """
-        self.logger.debug("Evaluating game state...")
+        # self.logger.debug("Evaluating game state...")
         # read and sort input state
         json_state = self.flatten_dict(self.sort_dict(json.loads(state)))
         json_state['state_index'] = self.state_index
-        self.logger.debug(json_state)
+        # self.logger.debug(json_state)
 
         # append data frame to CSV file
         df = pd.DataFrame.from_records([json_state]).set_index('state_index')
@@ -277,7 +280,7 @@ class EvaluationServer:
             df.to_csv(csv_path, mode='a', index=True, header=self.state_index == 0)
 
         # return gamestate dataframe
-        return df
+        return df.values
 
     def init_state_index(self, training_path):
         screenshot_path = os.path.join(training_path, "screenshots")

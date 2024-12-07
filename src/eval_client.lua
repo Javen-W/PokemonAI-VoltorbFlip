@@ -228,13 +228,13 @@ end
 local function send_game_states(visible_state, hidden_state)
 	advance_frames({}, 100) -- buffer while potential dialogue loads
 	advance_dialogue_state()
-	log("sending screenshot & game states...")
+	log("Sending screenshot & game states...")
 	comm.socketServerSend(VISIBLE_STATE_HEADER..serialize_table(visible_state))
 	comm.socketServerResponse()
 	comm.socketServerSend(HIDDEN_STATE_HEADER..serialize_table(hidden_state))
 	comm.socketServerResponse()
-	comm.socketServerScreenShotResponse()
-	return true
+	local response = comm.socketServerScreenShotResponse()
+	return response
 end
 
 local function send_game_fitness()
@@ -335,7 +335,7 @@ local function manual_level()
 	local remaining_count = count_remaining_tiles(visible_state, hidden_state)
 	while success and remaining_count > 0 do
 		log("Remaining tile count: "..remaining_count)
-		local decision_map = str_to_table(comm.socketServerScreenShotResponse())
+		local decision_map = str_to_table(send_game_states(visible_state, hidden_state))
 		local action_weights = sort_actions({table.unpack(decision_map, 1, 25)})
 		-- log(action_weights)
 
