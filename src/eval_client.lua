@@ -360,7 +360,16 @@ local function manual_level()
 		success = truth_value ~= 0x4
 		remaining_count = count_remaining_tiles(visible_state, hidden_state)
 	end
+
 	log("Manual level success: "..tostring(success))
+	advance_frames({}, 200)
+	advance_dialogue_state()
+	while not (in_menu_dialogue()) do
+		advance_frames({["A"] = "True"}, 1)
+		advance_frames({}, 5)
+	end
+	advance_dialogue_state()
+
 	return success
 end
 
