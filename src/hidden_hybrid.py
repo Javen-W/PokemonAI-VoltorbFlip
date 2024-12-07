@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch.nn.functional as F
 from torch.utils.data import DataLoader, Dataset
 from sklearn.model_selection import train_test_split
 from torchvision import models, transforms
@@ -142,13 +143,13 @@ class HybridModel(nn.Module):
 
             # forward pass
             outputs = self.forward(input_visible, input_image)
-            _, predicted = torch.max(outputs, 2)
+            scores, predicted = torch.max(F.sigmoid(outputs), 2)
 
             # map predictions back to 1-4
             predicted = predicted + 1
 
             # return predictions
-            return predicted
+            return scores[0], predicted[0]
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -208,22 +209,22 @@ def evaluate(model, test_loader):
     total = 0
     with torch.no_grad():
         for (inputs_tabular, inputs_image), targets in test_loader:
-
             # Move data to device
             inputs_tabular, inputs_image, targets = (
                 inputs_tabular.to(device),
                 inputs_image.to(device),
                 targets.to(device),
             )
+
             # Forward pass
             outputs = model(inputs_tabular, inputs_image)
-            _, predicted = torch.max(outputs, 2)  ###
+            _, predicted = torch.max(outputs, 2)
 
             # Map predictions back to 1-4
             predicted = predicted + 1
             targets = targets + 1  # Optional: Shift targets back for comparison
             
-            total += targets.numel() #size(0)
+            total += targets.numel()
             correct += (predicted == targets).sum().item()
     print(f"Accuracy: {100 * correct / total:.2f}%")
 

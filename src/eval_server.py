@@ -33,6 +33,7 @@ class EvaluationServer:
     TRAINING_PATH = './training_data/'
     IMAGE_DIMS = (256, 384)  # width x height
     CROP_DIMS = (5, 197, 5 + 190, 197 + 187)
+    TILE_ORDER = [0, 1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2, 20, 21, 22, 23, 24, 3, 4, 5, 6, 7, 8, 9]
 
     """
     Network packet header constants.
@@ -211,17 +212,28 @@ class EvaluationServer:
 
     def process_decision(self, image: np.array) -> str:
         """
-
+        Processes evaluation image state through pre-trained models and prepares a decision map for client.
         """
         image = Image.fromarray(image)
-
+        # predict visible and hidden state features
         visible_hat = self.visible_model.predict(image)
-        print(visible_hat)
-        hidden_hat = self.hidden_model.predict(visible_hat, image)
-        print(hidden_hat)
+        self.logger.debug(f"state({self.state_index}) visible_hat={visible_hat}")
+        scores, hidden_hat = self.hidden_model.predict(visible_hat, image)
+        self.logger.debug(f"state({self.state_index}) hidden_hat={hidden_hat}")
 
-        decision = 24
-        return str(decision)
+        # sort decision scores by tile index
+        tile_weights = np.zeros(25)
+        for i, tile_idx in enumerate(self.TILE_ORDER):
+            score = scores[i]
+            tile_val = hidden_hat[i].item()
+            if tile_val == 4:
+                score = 1.0 - score  # bomb
+            tile_weights[tile_idx] = score
+
+        # create decision map for client
+        decision_msg = "{ " + ", ".join(["{:.32f}".format(x) for x in tile_weights]) + " }"
+        self.logger.debug(f"state({self.state_index}) decision_msg={decision_msg}")
+        return decision_msg
 
     def process_screenshot(self, png: bytes) -> np.array:
         """
@@ -264,10 +276,9 @@ class EvaluationServer:
         # return gamestate dataframe
         return df
 
-    @classmethod
-    def init_state_index(cls, training_path):
+    def init_state_index(self, training_path):
         screenshot_path = os.path.join(training_path, "screenshots")
-        if os.path.exists(screenshot_path):
+        if os.path.exists(screenshot_path) and self.mode == self.TRAIN_MODE:
             n_images = len(os.listdir(screenshot_path))
             print(f"Existing training images: {n_images}")
             return n_images
