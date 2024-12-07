@@ -34,6 +34,14 @@ local function mult32(a, b)
 	return i
 end
 
+local function str_to_table(str)
+    local t = {}
+    for v in string.gmatch( str, "([%w%d%.]+)") do
+       t[#t+1] = v
+    end
+    return t
+end
+
 local function log(msg)
 	print(msg)
 	comm.socketServerSend(LOG_HEADER..tostring(msg))
@@ -76,6 +84,10 @@ local function sort_by_values(tbl, sort_function)
 		return sort_function(tbl[a], tbl[b]) end
 	)
 	return keys
+end
+
+local function sort_actions(weights)
+    return sort_by_values(weights, function(a, b) return a > b end)
 end
 
 local function decrypt(seed, addr, words)
@@ -322,7 +334,17 @@ local function manual_level()
 	local remaining_count = count_remaining_tiles(visible_state, hidden_state)
 	while success and remaining_count > 0 do
 		log("Remaining tile count: "..remaining_count)
-		local decision = comm.socketServerScreenShotResponse()
+		local decision_map = str_to_table(comm.socketServerScreenShotResponse())
+		local action_weights = sort_actions({table.unpack(decision_map, 1, 25)})
+		log(action_weights)
+
+		local i = 1
+		local decision = action_weights[i] - 1
+		while visible_state.tiles[decision] ~= 0x0 do
+			i = i + 1
+			decision = action_weights[i] - 1
+		end
+
 		local truth_value = hidden_state.tiles[decision]
 		log("Selecting tile ["..decision.."]: actual value = "..truth_value)
 		select_tile(tonumber(decision))
