@@ -336,24 +336,25 @@ local function manual_level()
 		log("Remaining tile count: "..remaining_count)
 		local decision_map = str_to_table(comm.socketServerScreenShotResponse())
 		local action_weights = sort_actions({table.unpack(decision_map, 1, 25)})
-		log(action_weights)
+		-- log(action_weights)
 
 		local i = 1
-		local decision = action_weights[i] - 1
+		local decision = tostring(action_weights[i] - 1)
 		while visible_state.tiles[decision] ~= 0x0 do
 			i = i + 1
-			decision = action_weights[i] - 1
+			decision = tostring(action_weights[i] - 1)
+			-- print(decision.." "..visible_state.tiles[decision])
 		end
 
 		local truth_value = hidden_state.tiles[decision]
-		log("Selecting tile ["..decision.."]: actual value = "..truth_value)
+		log("Selecting tile("..decision.."): truth_value="..truth_value)
 		select_tile(tonumber(decision))
 		visible_state.tiles[decision] = truth_value
 		advance_dialogue_state()
 		success = truth_value ~= 0x4
 		remaining_count = count_remaining_tiles(visible_state, hidden_state)
 	end
-	log("Manual level success: "..success)
+	log("Manual level success: "..tostring(success))
 	return success
 end
 
