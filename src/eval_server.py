@@ -66,6 +66,7 @@ class EvaluationServer:
         self.client_ps = []  # emulator client process ID(s)
         self.logger = self._init_logger()  # init the logger
         self.state_index = self.init_state_index(self.TRAINING_PATH)
+        self.eval_history = {self.state_index: {}}
 
         # load pretrained models
         self.visible_model, self.hidden_model = None, None
@@ -168,15 +169,20 @@ class EvaluationServer:
                     if self.mode == self.EVAL_MODE:
                         decision = self.process_decision(im)
                         self.send_response(client, decision)
+                        # calculate prediction accuracies
+                        self.evaluate_predictions()
+
                     # advance state index
                     self.state_index += 1
+                    self.eval_history[self.state_index] = {}
 
                 # is message a visible state struct?
                 elif msg[:self.VISIBLE_STATE_HEADER[1]] == self.VISIBLE_STATE_HEADER[0]:
                     trimmed_msg = msg[self.VISIBLE_STATE_HEADER[1]:]
                     csv_path = os.path.join(self.TRAINING_PATH, f"visible_states.csv")
-                    visible_state = self.process_gamestate(trimmed_msg, csv_path)
-                    self.logger.debug(f"state({self.state_index}) visible_true={visible_state[0]}")
+                    visible_state = self.process_gamestate(trimmed_msg, csv_path)[0]
+                    self.logger.debug(f"state({self.state_index}) visible_true={visible_state}")
+                    self.eval_history[self.state_index]['visible_true'] = visible_state
 
                     # respond to client with success
                     self.send_response(client, self.SUCCESS_STATE)
@@ -185,8 +191,9 @@ class EvaluationServer:
                 elif msg[:self.HIDDEN_STATE_HEADER[1]] == self.HIDDEN_STATE_HEADER[0]:
                     trimmed_msg = msg[self.HIDDEN_STATE_HEADER[1]:]
                     csv_path = os.path.join(self.TRAINING_PATH, f"hidden_states.csv")
-                    hidden_state = self.process_gamestate(trimmed_msg, csv_path)
-                    self.logger.debug(f"state({self.state_index}) hidden_true={hidden_state[0, -25:]}")
+                    hidden_state = self.process_gamestate(trimmed_msg, csv_path)[0, -25:]
+                    self.logger.debug(f"state({self.state_index}) hidden_true={hidden_state}")
+                    self.eval_history[self.state_index]['hidden_true'] = hidden_state
 
                     # respond to client with success
                     self.send_response(client, self.SUCCESS_STATE)
@@ -224,8 +231,11 @@ class EvaluationServer:
         # predict visible and hidden state features
         visible_hat = self.visible_model.predict(image)
         self.logger.debug(f"state({self.state_index}) visible_hat={visible_hat.numpy()}")
+        self.eval_history[self.state_index]['visible_hat'] = visible_hat.numpy()
+
         scores, hidden_hat = self.hidden_model.predict(visible_hat, image)
         self.logger.debug(f"state({self.state_index}) hidden_hat={hidden_hat.numpy()}")
+        self.eval_history[self.state_index]['hidden_hat'] = hidden_hat.numpy()
 
         # sort decision scores by tile index
         tile_weights = np.zeros(25)
@@ -234,6 +244,8 @@ class EvaluationServer:
             tile_val = hidden_hat[i].item()
             if tile_val == 4:
                 score = 1.0 - score  # bomb
+            elif tile_val == 1:
+                score -= 0.25  # trivial tile
             tile_weights[tile_idx] = score
 
         # create decision map for client
@@ -289,6 +301,20 @@ class EvaluationServer:
             print(f"Existing training images: {n_images}")
             return n_images
         return 0
+
+    def evaluate_predictions(self):
+        # visible state prediction accuracy
+        visible_accuracy = self.calculate_accuracy(
+            self.eval_history[self.state_index]['visible_true'],
+            self.eval_history[self.state_index]['visible_hat'],
+        )
+        self.logger.info(f"state({self.state_index}) visible_accuracy={visible_accuracy}")
+        # hidden state prediction accuracy
+        hidden_accuracy = self.calculate_accuracy(
+            self.eval_history[self.state_index]['hidden_true'],
+            self.eval_history[self.state_index]['hidden_hat'],
+        )
+        self.logger.info(f"state({self.state_index}) hidden_accuracy={hidden_accuracy}")
 
     @classmethod
     def send_response(cls, client, msg):
@@ -351,6 +377,10 @@ class EvaluationServer:
         Calculates the message index for the received data.
         """
         return data.find(b" ") + 1
+
+    @staticmethod
+    def calculate_accuracy(a: np.array, b: np.array) -> float:
+        return (a == b).sum() / len(a)
 
     def spawn_client(self):
         """
