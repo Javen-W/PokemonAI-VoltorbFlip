@@ -1,3 +1,4 @@
+import torch
 import json
 import logging
 import platform
@@ -92,7 +93,9 @@ class EvaluationServer:
 
         # evaluate client(s)
         fitness = self.evaluate_client(client)
-        self.logger.info(f"Evaluation fitness: {fitness}")
+        fitness_df = pd.DataFrame.from_records(fitness)
+        self.logger.info(f"Evaluation fitness: {fitness_df}")
+        self.logger.info(f"Evaluation avg_fit={fitness_df.mean()}, max_fit={fitness_df.max()}")
 
         # send finish state to client
         self.send_response(client, self.FINISH_STATE)
@@ -143,8 +146,10 @@ class EvaluationServer:
                 break
 
         # repeat game loop
-        fitness = None
-        while fitness is None:
+        # fitness = None
+        # while fitness is None:
+        fitness = []
+        while len(fitness) < 255:
             # receive client buffered message
             data = client.recv(16000)
 
@@ -180,7 +185,7 @@ class EvaluationServer:
                 elif msg[:self.VISIBLE_STATE_HEADER[1]] == self.VISIBLE_STATE_HEADER[0]:
                     trimmed_msg = msg[self.VISIBLE_STATE_HEADER[1]:]
                     csv_path = os.path.join(self.TRAINING_PATH, f"visible_states.csv")
-                    visible_state = self.process_gamestate(trimmed_msg, csv_path)[0]
+                    visible_state = self.process_gamestate(trimmed_msg, csv_path)
                     self.logger.debug(f"state({self.state_index}) visible_true={visible_state}")
                     self.eval_history[self.state_index]['visible_true'] = visible_state
 
@@ -191,7 +196,7 @@ class EvaluationServer:
                 elif msg[:self.HIDDEN_STATE_HEADER[1]] == self.HIDDEN_STATE_HEADER[0]:
                     trimmed_msg = msg[self.HIDDEN_STATE_HEADER[1]:]
                     csv_path = os.path.join(self.TRAINING_PATH, f"hidden_states.csv")
-                    hidden_state = self.process_gamestate(trimmed_msg, csv_path)[0, -25:]
+                    hidden_state = self.process_gamestate(trimmed_msg, csv_path)[-25:]
                     self.logger.debug(f"state({self.state_index}) hidden_true={hidden_state}")
                     self.eval_history[self.state_index]['hidden_true'] = hidden_state
 
@@ -205,7 +210,8 @@ class EvaluationServer:
 
                 # is message a fitness score?
                 elif msg[:self.FITNESS_HEADER[1]] == self.FITNESS_HEADER[0]:
-                    fitness = int(msg[self.FITNESS_HEADER[1]:])
+                    _fitness = int(msg[self.FITNESS_HEADER[1]:])
+                    fitness.append({'fitness': _fitness})
                     # respond to client with success
                     self.send_response(client, self.SUCCESS_STATE)
 
@@ -243,7 +249,8 @@ class EvaluationServer:
             score = scores[i]
             tile_val = hidden_hat[i].item()
             if tile_val == 4:
-                score = 1.0 - score  # bomb
+                # score = min(1.0 - score, score)  # bomb
+                score = 1.0 - score
             elif tile_val == 1:
                 score -= 0.25  # trivial tile
             tile_weights[tile_idx] = score
@@ -292,7 +299,7 @@ class EvaluationServer:
             df.to_csv(csv_path, mode='a', index=True, header=self.state_index == 0)
 
         # return gamestate dataframe
-        return df.values
+        return df.iloc[0].values
 
     def init_state_index(self, training_path):
         screenshot_path = os.path.join(training_path, "screenshots")
