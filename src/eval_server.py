@@ -246,9 +246,12 @@ class EvaluationServer:
         img = img.crop(self.CROP_DIMS)
         im = np.array(img)
 
-        # save training image
+        # save processed image
         if self.mode == self.TRAIN_MODE:
             path = os.path.join(self.TRAINING_PATH, f"screenshots/{self.state_index}.png")
+            self.save_img(im, path)
+        else:
+            path = f"./logs/screenshots/debug_{self.state_index}.png"
             self.save_img(im, path)
 
         # advance state index
