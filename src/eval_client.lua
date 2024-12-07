@@ -18,6 +18,7 @@ local FITNESS_HEADER = "FITNESS:"
 local LOG_HEADER = "LOG:"
 local LOAD_SLOT = 2  -- the emulator savestate slot to load
 local MAX_COINS = 50000
+local MAX_GAMES = 1
 local REQUEST_MODE = "REQUEST_MODE"
 local MODE_TRAIN = "MODE_TRAIN"
 local MODE_EVAL = "MODE_EVAL"
@@ -240,7 +241,7 @@ local function send_game_fitness()
 	local fitness = read_collected_coins()
 	log("fitness score: "..fitness)
 	comm.socketServerSend(FITNESS_HEADER..fitness)
-	comm.socketServerResponse()
+	-- comm.socketServerResponse()
 end
 
 local function count_remaining_tiles(visible_state, hidden_state)
@@ -363,8 +364,9 @@ end
 -- ####         GAME LOOP          ####
 -- ####################################
 function GameLoop(eval_mode)
-	while true do
-		log("Beginning game loop...")
+	local game_idx = 0
+	while game_idx < MAX_GAMES do
+		log("Beginning Game("..game_idx..")...")
 
 		-- load save state
 		log("Loading save slot "..LOAD_SLOT.."...")
@@ -388,30 +390,30 @@ function GameLoop(eval_mode)
 		-- end game loop
 		log("Finished game loop.")
 		send_game_fitness()
+		game_idx = game_idx + 1
 	end
 end
 
 
---GameLoop()
--- repeat game loop until evaluation server finishes
+-- ####################################
+-- ####           MAIN             ####
+-- ####################################
 print("Is client connected to socket server?")
 print(comm.socketServerIsConnected())
 print(comm.socketServerGetInfo())
 
-while true do
-	-- wait for server to be ready
-	comm.socketServerSend(READY_STATE)
-	local server_state = comm.socketServerResponse()
-	log("Server State: "..server_state)
-	if server_state == READY_STATE then
-		-- request eval mode
-		comm.socketServerSend(REQUEST_MODE)
-		local eval_mode = comm.socketServerResponse()
-		log("Evaluation mode: "..eval_mode)
-		-- start game loop
-		GameLoop(eval_mode)
-	elseif server_state == FINISHED_STATE then
-		-- Close emulator
-		client.exit()
-	end
+-- wait for server to be ready
+comm.socketServerSend(READY_STATE)
+local server_state = comm.socketServerResponse()
+log("Server State: "..server_state)
+if server_state == READY_STATE then
+	-- request eval mode
+	comm.socketServerSend(REQUEST_MODE)
+	local eval_mode = comm.socketServerResponse()
+	log("Evaluation mode: "..eval_mode)
+	-- start game loop
+	GameLoop(eval_mode)
+elseif server_state == FINISHED_STATE then
+	-- Close emulator
+	client.exit()
 end

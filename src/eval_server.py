@@ -143,7 +143,7 @@ class EvaluationServer:
 
         # repeat game loop
         fitness = None
-        while not fitness:
+        while fitness is None:
             # receive client buffered message
             data = client.recv(16000)
 
