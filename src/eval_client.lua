@@ -346,10 +346,16 @@ local function manual_level()
 
 		local i = 1
 		local decision = tostring(action_weights[i] - 1)
-		while visible_state.tiles[decision] ~= 0x0 do
+		while visible_state.tiles[decision] ~= 0x0 and i < 25 do
 			i = i + 1
 			decision = tostring(action_weights[i] - 1)
 			-- print(decision.." "..visible_state.tiles[decision])
+		end
+		if i > 25 then
+			log(decision_map)
+			log(action_weights)
+			success = false
+			break
 		end
 
 		local truth_value = hidden_state.tiles[decision]
