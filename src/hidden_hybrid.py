@@ -120,12 +120,6 @@ class HybridModel(nn.Module):
         # Combine features
         x_combined = torch.cat((x_tabular, x_image), dim=1)
         x_combined = self.fc_combined(x_combined)
-
-        # Debug output shape
-        # print(" self.fc_combined.out_features // 25", self.fc_combined.out_features // 25) ####################
-        # print(f"x_tabular shape: {x_tabular.shape}")
-        # print(f"x_image shape: {x_image.shape}")
-        # print(f"x_combined shape before reshaping: {x_combined.shape}")
         
         # Reshape to output predictions for each tile
         batch_size = x_tabular.size(0)
@@ -137,13 +131,13 @@ class HybridModel(nn.Module):
     def load_weights(self):
         self.load_state_dict(torch.load(self.MODEL_PATH, weights_only=True))
 
-    def predict(self, input_visible: pd.DataFrame, input_image: Image):
+    def predict(self, input_visible: torch.tensor, input_image: Image):
         self.eval()
         with torch.no_grad():
             # preprocess & transform input data
             input_visible, input_image = (
-                torch.tensor(input_visible.drop(columns=["state_index"]).values, dtype=torch.float32).to(device),
-                HybridModel.TRANSFORM(input_image).to(device),
+                torch.unsqueeze(input_visible.to(torch.float32).to(device), 0),
+                torch.unsqueeze(HybridModel.TRANSFORM(input_image).to(device), 0),
             )
 
             # forward pass

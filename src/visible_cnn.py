@@ -16,6 +16,8 @@ class VoltorbFlipCNN(nn.Module):
         transforms.Resize((32, 32)),
         transforms.ToTensor()
     ])
+    N_CLASSES = 13
+    N_FEATURES = 45
 
     def __init__(self):
         super(VoltorbFlipCNN, self).__init__()
@@ -26,7 +28,7 @@ class VoltorbFlipCNN(nn.Module):
         # Determine the correct input size for self.fc1 by passing a dummy input
         self.flattened_size = self._get_flattened_size()
         self.fc1 = nn.Linear(self.flattened_size, 256)
-        self.fc2 = nn.Linear(256, 585)
+        self.fc2 = nn.Linear(256, 585)  # n_classes * n_features
 
     def _get_flattened_size(self):
         # Pass a dummy input of the expected size through the conv layers
@@ -62,10 +64,10 @@ class VoltorbFlipCNN(nn.Module):
 
             # forward pass
             output = self.forward(input_image)
-            _, predicted = torch.max(output, 1)
+            _, decoded_output = torch.max(output.view(-1, VoltorbFlipCNN.N_CLASSES), 1)
 
             # return predictions
-            return predicted
+            return decoded_output
 
 
 # Custom dataset for loading images with state labels
@@ -82,7 +84,7 @@ class VoltorbFlipScreenshotDataset(Dataset):
         img_path = os.path.join(self.image_folder, f"{idx}.png")
         image = Image.open(img_path).convert('RGB')
         labels = self.visible_states.iloc[idx].values[1:]
-        encoded_labels = F.one_hot(torch.tensor(labels), num_classes=13).flatten()
+        encoded_labels = F.one_hot(torch.tensor(labels), num_classes=VoltorbFlipCNN.N_CLASSES).flatten()
 
         if self.transform:
             image = self.transform(image)
@@ -129,8 +131,8 @@ class Trainer:
         with torch.no_grad():
             for screenshots, labels in self.test_loader:
                 output = self.model(screenshots)
-                _, decoded_output = torch.max(output.view(-1, 13), 1)
-                _, decoded_labels = torch.max(labels.view(-1, 13), 1)
+                _, decoded_output = torch.max(output.view(-1, VoltorbFlipCNN.N_CLASSES), 1)
+                _, decoded_labels = torch.max(labels.view(-1, VoltorbFlipCNN.N_CLASSES), 1)
                 total += decoded_labels.shape.numel()
                 correct += (decoded_output == decoded_labels).sum().item()
         accuracy = correct / total * 100
