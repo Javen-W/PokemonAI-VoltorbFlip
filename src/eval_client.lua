@@ -18,7 +18,7 @@ local FITNESS_HEADER = "FITNESS:"
 local LOG_HEADER = "LOG:"
 local LOAD_SLOT = 2  -- the emulator savestate slot to load
 local MAX_COINS = 50000
-local MAX_GAMES = 1
+local MAX_GAMES = 255
 local REQUEST_MODE = "REQUEST_MODE"
 local MODE_TRAIN = "MODE_TRAIN"
 local MODE_EVAL = "MODE_EVAL"
@@ -128,6 +128,11 @@ local function randomize_seed()
 	local rng = math.random(1, 250)
 	log("Randomizing seed: "..rng)
 	mainmemory.write_u32_le(0x10F6CC, rng)
+end
+
+local function debug_seed(_seed)
+	log("Debugging seed: ".._seed)
+	mainmemory.write_u32_le(0x10F6CC, _seed)
 end
 
 local function read_tile(idx)
@@ -371,7 +376,8 @@ function GameLoop(eval_mode)
 		-- load save state
 		log("Loading save slot "..LOAD_SLOT.."...")
 		savestate.loadslot(LOAD_SLOT)
-		randomize_seed()
+		-- randomize_seed()
+		debug_seed(game_idx)
 		advance_lobby_state()
 
 		-- loop until a round is lost or max currency is reached
