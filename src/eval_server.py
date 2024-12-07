@@ -68,6 +68,7 @@ class EvaluationServer:
         self.logger = self._init_logger()  # init the logger
         self.state_index = self.init_state_index(self.TRAINING_PATH)
         self.eval_history = {self.state_index: {}}
+        self.independent_models = True  # separates model predictions
 
         # load pretrained models
         self.visible_model, self.hidden_model = None, None
@@ -233,13 +234,22 @@ class EvaluationServer:
         """
         Processes evaluation image state through pre-trained models and prepares a decision map for client.
         """
-        image = Image.fromarray(image)
-        # predict visible and hidden state features
+        # format image data
+        image = Image.open(f"./logs/screenshots/debug_{self.state_index}.png")
+        # image = Image.fromarray(image)
+
+        # predict visible state features
         visible_hat = self.visible_model.predict(image)
         self.logger.debug(f"state({self.state_index}) visible_hat={visible_hat.numpy()}")
         self.eval_history[self.state_index]['visible_hat'] = visible_hat.numpy()
 
-        scores, hidden_hat = self.hidden_model.predict(visible_hat, image)
+        # predict hidden state features
+        if self.independent_models:
+            scores, hidden_hat = self.hidden_model.predict(
+                torch.tensor(self.eval_history[self.state_index]['visible_true']), image
+            )
+        else:
+            scores, hidden_hat = self.hidden_model.predict(visible_hat, image)
         self.logger.debug(f"state({self.state_index}) hidden_hat={hidden_hat.numpy()}")
         self.eval_history[self.state_index]['hidden_hat'] = hidden_hat.numpy()
 
