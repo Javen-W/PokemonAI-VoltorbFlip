@@ -1,3 +1,4 @@
+import torch
 import json
 import logging
 import platform
@@ -11,6 +12,8 @@ import pandas as pd
 import PIL
 from PIL import Image
 from matplotlib import pyplot as plt
+from visible_cnn import VoltorbFlipCNN
+from hidden_hybrid import HybridModel
 
 
 class EvaluationServer:
@@ -21,6 +24,7 @@ class EvaluationServer:
     PORT = 0  # Port to listen on (non-privileged ports are > 1023)
     EMU_PATH = './emu/BizHawk-2.9.1/'
     N_CLIENTS = 1  # number of concurrent clients to evaluate genomes
+    SCRIPT_PATH = './src/eval_client.lua'
 
     """
     Image processing constants.
@@ -30,6 +34,7 @@ class EvaluationServer:
     TRAINING_PATH = './training_data/'
     IMAGE_DIMS = (256, 384)  # width x height
     CROP_DIMS = (5, 197, 5 + 190, 197 + 187)
+    TILE_ORDER = [0, 1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2, 20, 21, 22, 23, 24, 3, 4, 5, 6, 7, 8, 9]
 
     """
     Network packet header constants.
@@ -37,24 +42,38 @@ class EvaluationServer:
     PNG_HEADER = (b"\x89PNG", 4)
     VISIBLE_STATE_HEADER = (b"VISIBLE_STATE:", 14)
     HIDDEN_STATE_HEADER = (b"HIDDEN_STATE:", 13)
-    READY_STATE = b"5 READY"
-    SUCCESS_STATE = b"SUCCESS"
-    SEED_STATE = (b"SEED", 4)
-    FINISH_STATE = b"8 FINISHED"
     FITNESS_HEADER = (b"FITNESS:", 8)
     LOG_HEADER = (b"LOG:", 4)
+    READY_STATE_HEADER = b"5 READY"
 
-    def __init__(self):
+    REQUEST_MODE_HEADER = (b"REQUEST_MODE", 12)
+    REQUEST_SEED_HEADER = (b"REQUEST_SEED", 12)
+
+    READY_STATE = "READY"
+    SUCCESS_STATE = "SUCCESS"
+    FINISH_STATE = "FINISHED"
+    EVAL_MODE = "MODE_EVAL"
+    TRAIN_MODE = "MODE_TRAIN"
+
+    def __init__(self, mode: str):
         # default socket timeout
         socket.setdefaulttimeout(300)
 
         # evaluation vars
+        self.mode = self.EVAL_MODE
+        if mode == "train":
+            self.mode = self.TRAIN_MODE
+
         self.client_ps = []  # emulator client process ID(s)
         self.logger = self._init_logger()  # init the logger
         self.state_index = self.init_state_index(self.TRAINING_PATH)
+        self.eval_history = {self.state_index: {}}
+        self.independent_models = True  # separates model predictions
 
-        # evaluation mode parameters
-        self.SCRIPT_PATH = './src/eval_client.lua'
+        # load pretrained models
+        self.visible_model, self.hidden_model = None, None
+        if self.mode == self.EVAL_MODE:
+            self.load_models()
 
         # emulator path
         if platform.system() == 'Windows':
@@ -74,10 +93,13 @@ class EvaluationServer:
         self.logger.debug(f"Connected by {addr}.")
 
         # evaluate client(s)
-        self.evaluate_client(client)
+        fitness = self.evaluate_client(client)
+        fitness_df = pd.DataFrame.from_records(fitness)
+        self.logger.info(f"Evaluation fitness: {fitness_df}")
+        self.logger.info(f"Evaluation avg_fit={fitness_df.mean()}, max_fit={fitness_df.max()}")
 
         # send finish state to client
-        client.sendall(self.FINISH_STATE)
+        self.send_response(client, self.FINISH_STATE)
 
         # successful generation evaluation
         self.close_server(server)
@@ -100,20 +122,35 @@ class EvaluationServer:
         # return server object
         return server
 
+    def load_models(self) -> None:
+        # visible model (predicts visual features)
+        self.visible_model = VoltorbFlipCNN()
+        self.visible_model.load_weights()
+
+        # hidden model (predicts hidden features)
+        self.hidden_model = HybridModel(
+            tabular_input_size=45,
+            image_output_size=64,
+            num_classes=4,
+        )
+        self.hidden_model.load_weights()
+
     def evaluate_client(self, client):
         # wait for client to be ready
         while True:
             data = client.recv(1024)
             if not data:
                 raise ConnectionClosedException
-            if data == self.READY_STATE:
-                self.logger.debug("Client is ready to evaluate next genome.")
-                client.sendall(self.READY_STATE)
+            if data == self.READY_STATE_HEADER:
+                self.logger.debug("Client is ready to evaluate.")
+                self.send_response(client, self.READY_STATE)
                 break
 
         # repeat game loop
-        finished = False
-        while not finished:
+        # fitness = None
+        # while fitness is None:
+        fitness = []
+        while len(fitness) < 255:
             # receive client buffered message
             data = client.recv(16000)
 
@@ -130,15 +167,29 @@ class EvaluationServer:
 
                 # is message a state screenshot?
                 elif msg[:self.PNG_HEADER[1]] == self.PNG_HEADER[0]:
-                    self.process_screenshot(msg)
+                    im = self.process_screenshot(msg)
                     # respond to client with success
-                    self.send_response(client, self.SUCCESS_STATE)
+                    if self.mode == self.TRAIN_MODE:
+                        self.send_response(client, self.SUCCESS_STATE)
+                    # make decision
+                    if self.mode == self.EVAL_MODE:
+                        decision = self.process_decision(im)
+                        self.send_response(client, decision)
+                        # calculate prediction accuracies
+                        self.evaluate_predictions()
+
+                    # advance state index
+                    self.state_index += 1
+                    self.eval_history[self.state_index] = {}
 
                 # is message a visible state struct?
                 elif msg[:self.VISIBLE_STATE_HEADER[1]] == self.VISIBLE_STATE_HEADER[0]:
                     trimmed_msg = msg[self.VISIBLE_STATE_HEADER[1]:]
                     csv_path = os.path.join(self.TRAINING_PATH, f"visible_states.csv")
-                    self.process_gamestate(trimmed_msg, csv_path)
+                    visible_state = self.process_gamestate(trimmed_msg, csv_path)
+                    self.logger.debug(f"state({self.state_index}) visible_true={visible_state}")
+                    self.eval_history[self.state_index]['visible_true'] = visible_state
+
                     # respond to client with success
                     self.send_response(client, self.SUCCESS_STATE)
 
@@ -146,12 +197,27 @@ class EvaluationServer:
                 elif msg[:self.HIDDEN_STATE_HEADER[1]] == self.HIDDEN_STATE_HEADER[0]:
                     trimmed_msg = msg[self.HIDDEN_STATE_HEADER[1]:]
                     csv_path = os.path.join(self.TRAINING_PATH, f"hidden_states.csv")
-                    self.process_gamestate(trimmed_msg, csv_path)
+                    hidden_state = self.process_gamestate(trimmed_msg, csv_path)[-25:]
+                    self.logger.debug(f"state({self.state_index}) hidden_true={hidden_state}")
+                    self.eval_history[self.state_index]['hidden_true'] = hidden_state
+
+                    # respond to client with success
+                    self.send_response(client, self.SUCCESS_STATE)
+
+                # is message a mode request?
+                elif msg[:self.REQUEST_MODE_HEADER[1]] == self.REQUEST_MODE_HEADER[0]:
+                    # respond to client with evaluation mode
+                    self.send_response(client, self.mode)
+
+                # is message a fitness score?
+                elif msg[:self.FITNESS_HEADER[1]] == self.FITNESS_HEADER[0]:
+                    _fitness = int(msg[self.FITNESS_HEADER[1]:])
+                    fitness.append({'fitness': _fitness})
                     # respond to client with success
                     self.send_response(client, self.SUCCESS_STATE)
 
         # finished evaluating client
-        return None
+        return fitness
 
     @classmethod
     def _parse_msgs(cls, _msg) -> [bytes]:
@@ -164,9 +230,50 @@ class EvaluationServer:
         size = int(split[0])
         return [split[1][:size]] + cls._parse_msgs(split[1][size:])
 
-    def process_screenshot(self, png: bytes):
+    def process_decision(self, image: np.array) -> str:
         """
-        TODO
+        Processes evaluation image state through pre-trained models and prepares a decision map for client.
+        """
+        # format image data
+        image = Image.open(f"./logs/screenshots/debug_{self.state_index}.png")
+        # image = Image.fromarray(image)
+
+        # predict visible state features
+        visible_hat = self.visible_model.predict(image)
+        self.logger.debug(f"state({self.state_index}) visible_hat={visible_hat.numpy()}")
+        self.eval_history[self.state_index]['visible_hat'] = visible_hat.numpy()
+
+        # predict hidden state features
+        if self.independent_models:
+            scores, hidden_hat = self.hidden_model.predict(
+                torch.tensor(self.eval_history[self.state_index]['visible_true']), image
+            )
+        else:
+            scores, hidden_hat = self.hidden_model.predict(visible_hat, image)
+        self.logger.debug(f"state({self.state_index}) hidden_hat={hidden_hat.numpy()}")
+        self.eval_history[self.state_index]['hidden_hat'] = hidden_hat.numpy()
+
+        # sort decision scores by tile index
+        tile_weights = np.zeros(25)
+        for i, tile_idx in enumerate(self.TILE_ORDER):
+            score = scores[i]
+            tile_val = hidden_hat[i].item()
+            if tile_val == 4:
+                # score = min(1.0 - score, score)  # bomb
+                score = 1.0 - score
+            elif tile_val == 1:
+                score -= 0.25  # trivial tile
+            tile_weights[tile_idx] = score
+
+        # create decision map for client
+        decision_msg = "{ " + ", ".join(["{:.32f}".format(x) for x in tile_weights]) + " }"
+        self.logger.debug(f"state({self.state_index}) decision_msg={decision_msg}")
+        return decision_msg
+
+    def process_screenshot(self, png: bytes) -> np.array:
+        """
+        Converts a Bytes format PNG image into a numpy matrix and does basic preprocessing.
+        If in training mode, the processed image will also be saved to disk.
         """
         self.logger.debug("Processing game screenshot...")
         # read image and convert to grayscale
@@ -174,35 +281,57 @@ class EvaluationServer:
         img = img.crop(self.CROP_DIMS)
         im = np.array(img)
 
-        # save training image
-        path = os.path.join(self.TRAINING_PATH, f"screenshots/{self.state_index}.png")
-        self.save_img(im, path)
+        # save processed image
+        if self.mode == self.TRAIN_MODE:
+            path = os.path.join(self.TRAINING_PATH, f"screenshots/{self.state_index}.png")
+            self.save_img(im, path)
+        else:
+            path = f"./logs/screenshots/debug_{self.state_index}.png"
+            self.save_img(im, path)
 
-        # advance state index
-        self.state_index += 1
+        # return image
+        return im
 
-    def process_gamestate(self, state: bytes, csv_path: str):
+    def process_gamestate(self, state: bytes, csv_path: str) -> np.array:
         """
+        Converts a Bytes format gamestate struct to dataframe form.
+        If in training mode, the gamestate dataframe will also be appended to disk.
         """
-        self.logger.debug("Evaluating game state...")
+        # self.logger.debug("Evaluating game state...")
         # read and sort input state
         json_state = self.flatten_dict(self.sort_dict(json.loads(state)))
         json_state['state_index'] = self.state_index
-        self.logger.debug(json_state)
+        # self.logger.debug(json_state)
 
-        # TODO: if in training mode
         # append data frame to CSV file
         df = pd.DataFrame.from_records([json_state]).set_index('state_index')
-        df.to_csv(csv_path, mode='a', index=True, header=self.state_index == 0)
+        if self.mode == self.TRAIN_MODE:
+            df.to_csv(csv_path, mode='a', index=True, header=self.state_index == 0)
 
-    @classmethod
-    def init_state_index(cls, training_path):
+        # return gamestate dataframe
+        return df.iloc[0].values
+
+    def init_state_index(self, training_path):
         screenshot_path = os.path.join(training_path, "screenshots")
-        if os.path.exists(screenshot_path):
+        if os.path.exists(screenshot_path) and self.mode == self.TRAIN_MODE:
             n_images = len(os.listdir(screenshot_path))
             print(f"Existing training images: {n_images}")
             return n_images
         return 0
+
+    def evaluate_predictions(self):
+        # visible state prediction accuracy
+        visible_accuracy = self.calculate_accuracy(
+            self.eval_history[self.state_index]['visible_true'],
+            self.eval_history[self.state_index]['visible_hat'],
+        )
+        self.logger.info(f"state({self.state_index}) visible_accuracy={visible_accuracy}")
+        # hidden state prediction accuracy
+        hidden_accuracy = self.calculate_accuracy(
+            self.eval_history[self.state_index]['hidden_true'],
+            self.eval_history[self.state_index]['hidden_hat'],
+        )
+        self.logger.info(f"state({self.state_index}) hidden_accuracy={hidden_accuracy}")
 
     @classmethod
     def send_response(cls, client, msg):
@@ -249,7 +378,7 @@ class EvaluationServer:
         # create and add handlers
         stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(log_format)
-        stream_handler.setLevel(logging.INFO)
+        stream_handler.setLevel(logging.DEBUG)
         logger.addHandler(stream_handler)
 
         info_handler = logging.FileHandler(f"./logs/eval_server.log")
@@ -265,6 +394,10 @@ class EvaluationServer:
         Calculates the message index for the received data.
         """
         return data.find(b" ") + 1
+
+    @staticmethod
+    def calculate_accuracy(a: np.array, b: np.array) -> float:
+        return (a == b).sum() / len(a)
 
     def spawn_client(self):
         """
