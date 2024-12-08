@@ -6,6 +6,13 @@ Course project for MSU CSE803 Computer Vision.
 
 ...
 
+![2024-12-07_19-42-31](https://github.com/user-attachments/assets/d2184589-8d8b-48ce-9864-25e89df00fa6)
+
+![2024-12-07_19-42-54](https://github.com/user-attachments/assets/e14b3963-7373-48c1-b950-383434b27d20)
+
+![2024-12-07_19-43-05](https://github.com/user-attachments/assets/8ea1f568-d59b-4dc5-8305-9cb94f96d9dc)
+
+
 ## Installation
 
 1. Clone the project repository.
