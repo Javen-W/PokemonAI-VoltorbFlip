@@ -1,9 +1,3 @@
-# PokemonAI-VoltorbFlip
-Course project for MSU CSE803 Computer Vision.
-
-## Description
-[Voltorb Flip](https://bulbapedia.bulbagarden.net/wiki/Voltorb_Flip) is a Picross-Minesweeper hybrd mini-game found within Pokemon HeartGold & SoulSilver (HGSS).
-
 # Pokémon Voltorb Flip AI: Computer Vision and Heuristic Decision-Making
 
 This repository contains my course project for CSE803: Computer Vision, where we developed an AI to play the Pokémon HeartGold/SoulSilver minigame Voltorb Flip using convolutional neural networks (CNNs), memory mapping, and heuristic decision-making. The project involved debugging Nintendo DS (NDS) game memory addresses, writing a Lua script for the BizHawk-2.9.1 emulator to control gameplay, generating 17,000+ training screenshots with corresponding game state data, and training CNN models to predict game states and make tile selection decisions. The AI achieved a high score of 1851 coins, reaching level 7 in evaluation runs, demonstrating robust performance in a stochastic environment.
